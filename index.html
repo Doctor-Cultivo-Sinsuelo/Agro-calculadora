@@ -227,9 +227,42 @@
   </div>
 
   <div id="resultados"></div>
+  <div id="receta-acumulada"></div>
+
+  <div class="panel-card">
+    <div class="section-label">Tu perfil (aparece en el PDF)</div>
+    <div class="field-grid">
+      <label>Nombre*<input id="perfilNombre" type="text" placeholder="Tu nombre"></label>
+      <label>Empresa / Consultoría<input id="perfilEmpresa" type="text"></label>
+      <label>Teléfono<input id="perfilTelefono" type="text"></label>
+      <label>Correo<input id="perfilEmail" type="text"></label>
+    </div>
+    <p class="hint">Se guarda en este navegador (no se envía a ningún servidor) para no tener que volver a escribirlo.</p>
+
+    <div class="section-label">Datos de esta receta</div>
+    <div class="field-grid">
+      <label>Nombre del productor<input id="recetaProductor" type="text"></label>
+      <label>Cultivo<input id="recetaCultivo" type="text"></label>
+      <label>Empresa / Rancho<input id="recetaRancho" type="text"></label>
+      <label>Superficie<input id="recetaArea" type="text"></label>
+    </div>
+    <div class="chip-row" id="tipoAplicacion-chips" style="margin-top:10px;">
+      <button type="button" class="chip active" data-aplic="Riego">Riego</button>
+      <button type="button" class="chip" data-aplic="Foliar">Foliar</button>
+    </div>
+
+    <div class="section-label">Observaciones</div>
+    <div class="field-grid">
+      <textarea id="recetaObservaciones" rows="3" style="grid-column:1/-1;font-family:inherit;font-size:0.9rem;padding:10px 12px;border-radius:9px;border:1px solid var(--hair);background:var(--paper);color:var(--ink);resize:vertical;" placeholder="Notas para el productor, recomendaciones adicionales…"></textarea>
+    </div>
+
+    <button type="button" class="btn-calc" id="btn-exportar-pdf">📄 Exportar plan de aplicación (PDF)</button>
+    <button type="button" class="btn-secondary" id="btn-compartir-pdf">Compartir PDF</button>
+  </div>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 (function(){
 
@@ -314,6 +347,51 @@ let resultadosFertilizantes = {};
 let resultadosNutrientesAportados = {};
 let mensajeError = null;
 let _nextId = 1;
+
+// ─── Perfil profesional (persistido en localStorage del navegador) ─────────
+const perfil = {nombre:'', empresa:'', telefono:'', email:''};
+try{
+  const saved = JSON.parse(localStorage.getItem('agro_perfil')||'null');
+  if(saved) Object.assign(perfil, saved);
+}catch(e){}
+function guardarPerfilStorage(){ try{ localStorage.setItem('agro_perfil', JSON.stringify(perfil)); }catch(e){} }
+
+// ─── Datos de la receta puntual (no persisten entre sesiones) ─────────────
+const recetaInfo = { productor:'', cultivo:'', rancho:'', area:'', tipoAplicacion:'Riego', observaciones:'' };
+
+// ─── Receta acumulada: junta varios métodos calculados en un solo PDF ─────
+const recetaAcumulada = {};
+
+function volumenParaMetodo(tipo){
+  return ['PPM','MEQ','CE','MICROELEMENTOS','NEUTRALIZACION'].includes(tipo) ? num(state.volumen) : null;
+}
+function unidadActual(tipo){
+  return {UNIDADES:'kg/ha', PPM:'mg/L', MEQ:'meq/L', MICROELEMENTOS:'mg/L', CE:'dS/m', NEUTRALIZACION:'mL', INVERSO:'meq/L'}[tipo];
+}
+function nombreMetodo(tipo){
+  return {UNIDADES:'Unidades (kg/ha)', PPM:'ppm', CE:'CE', MEQ:'MEQ', MICROELEMENTOS:'Microelementos',
+    NEUTRALIZACION:'Neutralización de pH', INVERSO:'Conversión'}[tipo];
+}
+function guardarEnRecetaAcumulada(){
+  if(!mensajeError && Object.keys(resultadosFertilizantes).length>0 && state.tipoSeleccionado!=='INVERSO'){
+    recetaAcumulada[state.tipoSeleccionado] = {
+      resultados: {...resultadosFertilizantes},
+      aportes: {...resultadosNutrientesAportados},
+      unidad: unidadActual(state.tipoSeleccionado),
+      volumenLitros: volumenParaMetodo(state.tipoSeleccionado)
+    };
+  }
+}
+function renderRecetaAcumulada(){
+  const el = document.getElementById('receta-acumulada');
+  const keys = Object.keys(recetaAcumulada);
+  if(keys.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = `<div class="items-card" style="margin-top:14px;">` +
+    keys.map(tipo=>`<div class="item-row"><span>📋 ${escapeHtml(nombreMetodo(tipo))}</span><span class="item-remove" data-tipo="${tipo}">✕</span></div>`).join('') +
+    `</div><div class="link-danger" id="btn-vaciar-receta" style="margin-top:8px;">Vaciar todo</div>`;
+  el.querySelectorAll('.item-remove').forEach(s=>s.addEventListener('click', ()=>{ delete recetaAcumulada[s.dataset.tipo]; renderRecetaAcumulada(); }));
+  document.getElementById('btn-vaciar-receta').addEventListener('click', ()=>{ Object.keys(recetaAcumulada).forEach(k=>delete recetaAcumulada[k]); renderRecetaAcumulada(); });
+}
 
 function num(s){ const v = parseFloat(s); return isNaN(v) ? 0 : v; }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1015,7 +1093,7 @@ document.querySelectorAll('#tipoAcido-chips .chip').forEach(btn=>{
     document.querySelectorAll('#tipoAcido-chips .chip').forEach(b=>b.classList.toggle('active', b===btn));
   });
 });
-document.getElementById('btn-calc-neutralizacion').addEventListener('click', ()=>{ calcularNeutralizacion(); renderResultados(); });
+document.getElementById('btn-calc-neutralizacion').addEventListener('click', ()=>{ calcularNeutralizacion(); renderResultados(); guardarEnRecetaAcumulada(); renderRecetaAcumulada(); });
 
 document.querySelectorAll('#inversoTipo-chips .chip').forEach(btn=>{
   btn.addEventListener('click', ()=>{ state.inversoTipoItem = btn.dataset.tipo; mensajeError=null; renderInversoSub(); });
@@ -1035,7 +1113,131 @@ document.getElementById('main-calc-btn').addEventListener('click', ()=>{
     case 'MICROELEMENTOS': calcularMicroelementos(); break;
   }
   renderResultados();
+  guardarEnRecetaAcumulada();
+  renderRecetaAcumulada();
 });
+
+// ─── Perfil / datos de receta: cargar valores guardados y enlazar inputs ──
+document.getElementById('perfilNombre').value = perfil.nombre;
+document.getElementById('perfilEmpresa').value = perfil.empresa;
+document.getElementById('perfilTelefono').value = perfil.telefono;
+document.getElementById('perfilEmail').value = perfil.email;
+['Nombre','Empresa','Telefono','Email'].forEach(campo=>{
+  const key = campo.toLowerCase();
+  document.getElementById('perfil'+campo).addEventListener('input', e=>{ perfil[key]=e.target.value; guardarPerfilStorage(); });
+});
+
+['recetaProductor','recetaCultivo','recetaRancho','recetaArea'].forEach(id=>{
+  const key = id.replace('receta','').charAt(0).toLowerCase() + id.replace('receta','').slice(1);
+  document.getElementById(id).addEventListener('input', e=>{ recetaInfo[key]=e.target.value; });
+});
+document.getElementById('recetaObservaciones').addEventListener('input', e=>{ recetaInfo.observaciones = e.target.value; });
+document.querySelectorAll('#tipoAplicacion-chips .chip').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    recetaInfo.tipoAplicacion = btn.dataset.aplic;
+    document.querySelectorAll('#tipoAplicacion-chips .chip').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+});
+
+// ─── Generar PDF (jsPDF) ───────────────────────────────────────────────────
+function siguienteNumeroReceta(){
+  let n = parseInt(localStorage.getItem('agro_contador')||'0', 10) + 1;
+  try{ localStorage.setItem('agro_contador', String(n)); }catch(e){}
+  return n;
+}
+
+function generarPDF(){
+  if(!perfil.nombre.trim()){
+    alert('Ingresá tu nombre en "Tu perfil" antes de exportar (es lo que aparece como responsable técnico en el PDF).');
+    document.getElementById('perfilNombre').focus();
+    return null;
+  }
+  // Si todavía no se guardó nada en la receta acumulada pero hay un cálculo activo, lo sumamos.
+  if(Object.keys(recetaAcumulada).length===0) guardarEnRecetaAcumulada();
+  if(Object.keys(recetaAcumulada).length===0){
+    alert('Calculá al menos una dosis antes de exportar el PDF.');
+    return null;
+  }
+
+  const numero = siguienteNumeroReceta();
+  const fecha = new Date().toLocaleDateString('es-MX');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const margenDer = 196;
+  let y = 20;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(27,94,32);
+  doc.text('AgroCalculadora — Plan de aplicación', 14, y); y+=7;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(120,120,120);
+  doc.text(`Receta N.° ${numero}   ·   ${fecha}`, 14, y); y+=8;
+  doc.setDrawColor(220,214,196); doc.line(14,y,margenDer,y); y+=9;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(30,30,30);
+  doc.text('Responsable técnico', 14, y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+  doc.text(`${perfil.nombre}${perfil.empresa ? ' — '+perfil.empresa : ''}`, 14, y); y+=5;
+  if(perfil.telefono){ doc.text(`Tel: ${perfil.telefono}`, 14, y); y+=5; }
+  if(perfil.email){ doc.text(`Correo: ${perfil.email}`, 14, y); y+=5; }
+  y+=5;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(30,30,30);
+  doc.text('Datos de la receta', 14, y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+  doc.text(`Productor: ${recetaInfo.productor || '—'}`, 14, y); y+=5;
+  doc.text(`Cultivo: ${recetaInfo.cultivo || '—'}    Superficie: ${recetaInfo.area || '—'}`, 14, y); y+=5;
+  doc.text(`Empresa / Rancho: ${recetaInfo.rancho || '—'}    Aplicación: ${recetaInfo.tipoAplicacion}`, 14, y); y+=9;
+
+  Object.entries(recetaAcumulada).forEach(([tipo, item])=>{
+    if(y>265){ doc.addPage(); y=20; }
+    let titulo = nombreMetodo(tipo);
+    if(item.volumenLitros && item.volumenLitros>0) titulo += ` — para ${item.volumenLitros} L de agua`;
+    doc.setFillColor(227,237,226); doc.rect(14, y-4.5, margenDer-14, 7, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(27,94,32);
+    doc.text(titulo, 16, y); y+=8;
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
+    Object.entries(item.resultados).forEach(([nombre,dosis])=>{
+      if(y>275){ doc.addPage(); y=20; }
+      doc.text(String(nombre), 16, y);
+      doc.text(String(dosis), margenDer, y, {align:'right'});
+      y+=5.5;
+    });
+    y+=3;
+  });
+
+  if(recetaInfo.observaciones.trim()){
+    if(y>250){ doc.addPage(); y=20; }
+    y+=3;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(30,30,30);
+    doc.text('Observaciones', 14, y); y+=6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+    const lineas = doc.splitTextToSize(recetaInfo.observaciones, margenDer-14);
+    doc.text(lineas, 14, y);
+  }
+
+  return { doc, filename: `receta_${numero}.pdf` };
+}
+
+document.getElementById('btn-exportar-pdf').addEventListener('click', ()=>{
+  const res = generarPDF();
+  if(res) res.doc.save(res.filename);
+});
+
+document.getElementById('btn-compartir-pdf').addEventListener('click', async ()=>{
+  const res = generarPDF();
+  if(!res) return;
+  const blob = res.doc.output('blob');
+  const file = new File([blob], res.filename, {type:'application/pdf'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:'Receta agronómica', text:'Plan de aplicación — AgroCalculadora'}); }
+    catch(e){ /* el usuario canceló el selector de compartir */ }
+  } else {
+    res.doc.save(res.filename);
+    alert('Tu navegador no permite compartir archivos directamente: se descargó el PDF, podés adjuntarlo manualmente por WhatsApp o correo.');
+  }
+});
+
+if(!(navigator.share)) document.getElementById('btn-compartir-pdf').style.display='none';
 
 seleccionarMetodo('UNIDADES');
 
