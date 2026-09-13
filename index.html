@@ -83,6 +83,33 @@
   .result-error{background:var(--err-bg);color:var(--err-ink);border-radius:14px;padding:16px 18px;font-size:0.9rem;}
 
   #resultados{margin-top:20px;}
+
+  /* Ayuda modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(23,33,15,0.55);z-index:50;
+    align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--paper-card);border-radius:18px;max-width:760px;width:100%;overflow:hidden;}
+  .modal-head{background:linear-gradient(160deg,#1a7a3c,#0f5a2c);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .modal-head h2{font-family:'Fraunces',serif;font-size:1.3rem;margin:2px 0 0;color:#fff;}
+  .modal-head .tiny{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);}
+  .modal-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1;}
+  .modal-body{padding:20px 24px;max-height:70vh;overflow-y:auto;font-size:0.88rem;color:var(--ink);}
+  .modal-body h3{font-family:'Fraunces',serif;font-size:1rem;margin:20px 0 4px;color:var(--leaf-700);}
+  .modal-body h3:first-child{margin-top:0;}
+  .modal-body p{margin:6px 0;color:var(--ink-soft);}
+  .modal-body p.tip{color:#2e6b1f;}
+  .modal-body p.warn{color:#8c231a;}
+  .modal-body hr{border:none;border-top:1px solid var(--hair);margin:16px 0;}
+  .modal-body ul{margin:6px 0;padding-left:20px;color:var(--ink-soft);}
+  .comp-table-wrap{overflow-x:auto;border:1px solid var(--hair);border-radius:12px;margin-top:8px;}
+  .comp-table{border-collapse:collapse;font-size:0.75rem;white-space:nowrap;}
+  .comp-table th{background:rgba(27,94,32,0.08);color:var(--leaf-700);font-weight:700;padding:8px 10px;text-align:center;}
+  .comp-table th:first-child{text-align:left;}
+  .comp-table td{padding:6px 10px;text-align:center;border-top:1px solid var(--hair);}
+  .comp-table td:first-child{text-align:left;font-weight:500;color:var(--ink);}
+  .comp-table tr:nth-child(even) td{background:var(--paper);}
 </style>
 </head>
 <body>
@@ -91,6 +118,7 @@
   <div class="wrap">
     <span class="mark">A</span>
     <h1>AgroCalculadora<small>Dosis de precisión para cada cultivo — versión web</small></h1>
+    <button type="button" id="btn-ayuda" style="margin-left:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:var(--paper-card);color:var(--leaf-700);font-weight:700;font-size:1rem;cursor:pointer;">?</button>
   </div>
 </header>
 
@@ -260,6 +288,89 @@
     <button type="button" class="btn-secondary" id="btn-compartir-pdf">Compartir PDF</button>
   </div>
 
+</div>
+
+<div class="modal-overlay" id="ayuda-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="tiny">Guía de uso</div>
+        <h2>📖 ¿Qué es AgroCalculadora?</h2>
+      </div>
+      <button type="button" class="modal-close" id="ayuda-cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Herramienta profesional para el cálculo de dosis de fertilizantes en agricultura convencional, hidroponía y fertirriego.</p>
+      <hr>
+
+      <h3>🌾 Método 1: Unidades (kg/ha)</h3>
+      <p>Ideal para agricultura convencional en campo abierto.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá los kg/ha de nutrientes (N, P₂O₅, K₂O, Ca, Mg, S)<br>2. Seleccioná los fertilizantes disponibles<br>3. Presioná "Calcular receta"</p>
+      <p class="tip">💡 Ej: 100 kg/ha de N con Urea 46% → 100 ÷ 0.46 = 217 kg/ha</p>
+      <hr>
+
+      <h3>💧 Método 2: ppm (mg/L)</h3>
+      <p>Ideal para hidroponía y fertirriego.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen de agua en litros<br>2. Ingresá los ppm deseados de Ca²⁺, K⁺ y Mg²⁺<br>3. Seleccioná los fertilizantes disponibles<br>4. Presioná "Calcular receta"</p>
+      <p class="tip">💡 Ej: 1000 L con 180 ppm Ca → (180 ÷ 0.19) × (1000 ÷ 1000) = 947 g de Nitrato de Calcio</p>
+      <hr>
+
+      <h3>⚡ Método 3: Conductividad Eléctrica (dS/m)</h3>
+      <p>Calcula fertilizantes para alcanzar una CE específica.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Seleccioná la CE objetivo (0.5 a 3.0 dS/m)<br>2. Ingresá el volumen en litros<br>3. Presioná "Calcular receta"</p>
+      <p class="tip">💡 Las tablas están basadas en valores estándar para soluciones nutritivas equilibradas.</p>
+      <hr>
+
+      <h3>🧪 Método 4: Miliequivalentes por litro (MEQ/L)</h3>
+      <p>El método más preciso para balancear soluciones hidropónicas profesionales.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen en litros<br>2. Ingresá los meq/L de: Ca²⁺, K⁺, Mg²⁺, NH₄⁺, NO₃⁻, H₂PO₄⁻, SO₄²⁻<br>3. Seleccioná los fertilizantes disponibles<br>4. Presioná "Calcular receta"</p>
+      <p class="warn">⚠️ Regla: cationes (Ca²⁺+K⁺+Mg²⁺+NH₄⁺) = aniones (NO₃⁻+H₂PO₄⁻+SO₄²⁻). La calculadora no verifica esto, cuidá el balance.</p>
+      <hr>
+
+      <h3>🌿 Método 5: Microelementos (mg/L)</h3>
+      <p>Calcula dosis de micronutrientes para una solución nutritiva completa.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen en litros<br>2. Ingresá los mg/L de Fe y el % de Fe de tu quelato<br>3. Seleccioná los fertilizantes disponibles<br>4. Presioná "Calcular receta"</p>
+      <p><b>💡 Valores de referencia (mg/L):</b><br>• Fe: 2.5–5.0 · Mn: 0.5–1.0 · Zn: 0.3–0.5 · Cu: 0.1–0.2 · B: 0.3–0.5 · Mo: 0.05–0.1</p>
+      <hr>
+
+      <h3>⚗️ Método 6: Neutralización de pH</h3>
+      <p>Calcula la cantidad de ácido para neutralizar bicarbonatos y ajustar el pH.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen de agua en litros<br>2. Ingresá los bicarbonatos en meq/L (del análisis de agua)<br>3. Seleccioná el tipo de ácido (Nítrico, Fosfórico o Sulfúrico)<br>4. Ingresá densidad (g/mL) y pureza (%)<br>5. Presioná "Calcular ácido"</p>
+      <p class="tip">💡 Siempre se deja 0.5 meq/L de remanente para estabilidad del pH.<br>💡 Ej: 3.5 meq/L bicarbonatos, 1000 L, ácido nítrico 68%, densidad 1.41 → ≈ 200 mL</p>
+      <hr>
+
+      <h3>🔄 Método 7: Conversión (varios fertilizantes → ppm y meq/L)</h3>
+      <p>Convierte una receta completa (uno o varios fertilizantes, y hasta ácidos) en el aporte real de ppm y meq/L a la solución. Sirve para revisar o comparar una receta ya armada.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen total de agua de la receta<br>2. Elegí el tipo de producto: "Conocido" (de la lista), "Personalizado" (uno propio) o "Ácido"<br>3. Completá los datos de ese producto y presioná "Agregar a la receta"<br>4. Repetí por cada fertilizante o ácido que uses en la misma mezcla<br>5. Presioná "Calcular receta": suma el aporte de todos los productos<br>6. Exportá el resultado a PDF con "Exportar plan de aplicación"</p>
+      <p class="tip">💡 Para líquidos se usa: %/100 × densidad × cantidad = gramos de nutriente.<br>💡 Con un fertilizante conocido, el meq/L se calcula con el peso equivalente de la sal completa (relación 1:1 catión/anión).<br>💡 Microelementos siempre en ppm, nunca en meq/L, porque en fertirriego no se balancean por equivalentes.</p>
+      <hr>
+
+      <h3>📋 Composición de fertilizantes</h3>
+      <p>Tabla de referencia con el % en peso de cada nutriente que aporta cada fertilizante — los mismos valores que usa la calculadora. Deslizá hacia los lados para ver todas las columnas.</p>
+      <div class="comp-table-wrap"><div id="tabla-composicion"></div></div>
+      <hr>
+
+      <h3>📊 Valores de referencia para hidroponía</h3>
+      <p><b>Nutrientes principales (meq/L):</b><br>• Ca²⁺: 3.0–5.0 · K⁺: 3.0–6.0 · Mg²⁺: 1.0–2.0 · NH₄⁺: 0–1.0<br>• NO₃⁻: 8.0–12.0 · H₂PO₄⁻: 1.0–1.5 · SO₄²⁻: 1.0–2.0</p>
+      <p>• pH óptimo: 5.5–6.5 · CE óptima: 1.2–2.5 dS/m (según cultivo y etapa)</p>
+      <hr>
+
+      <h3>👤 Perfil y exportación de PDF</h3>
+      <p>Cada receta exportada lleva tu nombre y empresa como responsable técnico.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Completá tu nombre y empresa una vez en "Tu perfil" (se guardan en este navegador)<br>2. Hacé un cálculo con cualquiera de los métodos<br>3. Completá los datos de la receta (productor, cultivo, aplicación)<br>4. Presioná "Exportar plan de aplicación (PDF)" o "Compartir PDF"</p>
+      <hr>
+
+      <h3 style="color:#8c231a;">⚠️ Consejos de seguridad importantes</h3>
+      <ul style="color:#5c3110;">
+        <li>Siempre agregá el ácido sobre el agua, nunca al revés</li>
+        <li>Usá guantes de nitrilo y gafas de seguridad con ácidos concentrados</li>
+        <li>Trabajá en área ventilada cuando uses ácido nítrico</li>
+        <li>Almacená los ácidos en lugares frescos, secos y fuera del alcance de niños</li>
+        <li>No mezcles ácidos sin conocimiento específico</li>
+        <li>Calibrá tu medidor de pH antes de cada uso</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1238,6 +1349,32 @@ document.getElementById('btn-compartir-pdf').addEventListener('click', async ()=
 });
 
 if(!(navigator.share)) document.getElementById('btn-compartir-pdf').style.display='none';
+
+// ─── Modal de ayuda ────────────────────────────────────────────────────────
+function renderTablaComposicion(){
+  const columnas = [
+    ['Fertilizante', null], ['N %','N'], ['P₂O₅ %','P2O5'], ['K₂O %','K2O'],
+    ['Ca %','Ca'], ['Mg %','Mg'], ['S %','SO4'], ['Fe %','Fe'], ['Cu %','Cu'],
+    ['Zn %','Zn'], ['Mn %','Mn'], ['B %','B'], ['Mo %','Mo']
+  ];
+  let html = '<table class="comp-table"><thead><tr>' + columnas.map(([t])=>`<th>${escapeHtml(t)}</th>`).join('') + '</tr></thead><tbody>';
+  fertilizantesConocidosComposicion.forEach(fert=>{
+    html += '<tr>';
+    columnas.forEach(([, clave])=>{
+      if(clave===null){ html += `<td>${escapeHtml(fert.nombre)}</td>`; return; }
+      const frac = fert.composicion[clave];
+      html += `<td>${frac!=null ? (frac*100).toFixed(1) : '—'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('tabla-composicion').innerHTML = html;
+}
+renderTablaComposicion();
+
+document.getElementById('btn-ayuda').addEventListener('click', ()=>{ document.getElementById('ayuda-modal').classList.add('open'); });
+document.getElementById('ayuda-cerrar').addEventListener('click', ()=>{ document.getElementById('ayuda-modal').classList.remove('open'); });
+document.getElementById('ayuda-modal').addEventListener('click', e=>{ if(e.target.id==='ayuda-modal') e.currentTarget.classList.remove('open'); });
 
 seleccionarMetodo('UNIDADES');
 
