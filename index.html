@@ -3,345 +3,1044 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgroCalculadora — Dosis de precisión para cada cultivo</title>
-<meta name="description" content="Calculadora profesional de dosis de fertilizantes para agricultura, hidroponía y fertirriego. Unidades, ppm, CE, meq/L, microelementos, neutralización de pH y conversión de recetas.">
+<title>AgroCalculadora — Calculadora de dosis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --soil-950:#17210f;
-    --soil-800:#243318;
-    --leaf-700:#1b5e20;
-    --leaf-600:#2c7a34;
-    --leaf-100:#e3ede2;
-    --paper:#f6f4ec;
-    --paper-card:#ffffff;
-    --clay:#c9722c;
-    --clay-dark:#a85a1f;
-    --ink:#22301d;
-    --ink-soft:#55614d;
-    --hair:#dcd6c4;
-    --warn-bg:#fbeee2;
-    --warn-ink:#7a3b13;
+    --soil-950:#17210f; --leaf-700:#1b5e20; --leaf-600:#2c7a34; --leaf-100:#e3ede2;
+    --paper:#f6f4ec; --paper-card:#ffffff; --clay-dark:#a85a1f;
+    --ink:#22301d; --ink-soft:#55614d; --hair:#dcd6c4;
+    --warn-bg:#fbeee2; --warn-ink:#7a3b13; --err-bg:#fbe4e1; --err-ink:#8c231a;
   }
   *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'IBM Plex Sans', sans-serif;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-  }
-  h1,h2,h3{
-    font-family:'Fraunces', serif;
-    color:var(--soil-950);
-    margin:0;
-    letter-spacing:-0.01em;
-  }
-  a{color:var(--leaf-700);}
-  .wrap{max-width:1040px;margin:0 auto;padding:0 24px;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px;}
+  header{padding:22px 0;border-bottom:1px solid var(--hair);margin-bottom:22px;}
+  header .wrap{padding-bottom:0;display:flex;align-items:center;gap:10px;}
+  .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(160deg,var(--leaf-600),var(--leaf-700));display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;}
+  h1{font-family:'Fraunces',serif;font-size:1.15rem;margin:0;color:var(--soil-950);}
+  h1 small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:0.8rem;color:var(--ink-soft);}
 
-  /* Header / nav */
-  header{
-    padding:20px 0;
-    border-bottom:1px solid var(--hair);
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:24px;}
+  .method-btn{
+    border:1px solid var(--hair);background:var(--paper-card);border-radius:12px;padding:12px 10px;
+    cursor:pointer;text-align:left;font-family:inherit;font-size:0.82rem;color:var(--ink);
   }
-  header .wrap{display:flex;align-items:center;justify-content:space-between;}
-  .brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;color:var(--soil-950);}
-  .brand .mark{
-    width:30px;height:30px;border-radius:8px;
-    background:linear-gradient(160deg,var(--leaf-600),var(--leaf-700));
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;font-size:16px;
-  }
-  nav a{
-    color:var(--ink-soft);text-decoration:none;font-size:0.92rem;margin-left:26px;
-  }
-  nav a:hover{color:var(--leaf-700);}
+  .method-btn b{display:block;font-size:0.92rem;color:var(--soil-950);margin-bottom:2px;}
+  .method-btn.active{background:var(--leaf-700);border-color:var(--leaf-700);color:#fff;}
+  .method-btn.active b{color:#fff;}
 
-  /* Hero */
-  .hero{
-    padding:72px 0 56px;
-    background:
-      radial-gradient(1100px 420px at 78% -10%, rgba(44,122,52,0.10), transparent 60%),
-      var(--paper);
+  .panel-card{background:var(--paper-card);border:1px solid var(--hair);border-radius:16px;padding:24px;margin-bottom:20px;}
+  .section-label{font-size:0.78rem;font-weight:600;letter-spacing:0.02em;color:var(--ink-soft);margin:18px 0 10px;}
+  .section-label:first-child{margin-top:0;}
+  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+  .field-grid label{display:flex;flex-direction:column;gap:6px;font-size:0.85rem;color:var(--ink-soft);}
+  input[type=number], input[type=text], select{
+    font-family:inherit;font-size:0.95rem;padding:10px 12px;border-radius:9px;border:1px solid var(--hair);
+    background:var(--paper);color:var(--ink);
   }
-  .hero-grid{display:grid;grid-template-columns:1.15fr 0.85fr;gap:48px;align-items:center;}
-  .kicker{
-    color:var(--clay-dark);font-weight:600;font-size:0.95rem;margin-bottom:14px;
-  }
-  .hero h1{
-    font-size:clamp(2.1rem, 4vw, 3.1rem);
-    line-height:1.08;
-    max-width:12ch;
-  }
-  .hero p.lead{
-    margin-top:20px;
-    font-size:1.1rem;
-    color:var(--ink-soft);
-    max-width:46ch;
-  }
-  .cta-row{margin-top:30px;display:flex;gap:14px;flex-wrap:wrap;}
-  .btn{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:13px 22px;border-radius:10px;
-    font-weight:600;font-size:0.96rem;text-decoration:none;
-    border:1px solid transparent;
-  }
-  .btn-primary{background:var(--leaf-700);color:#fff;}
-  .btn-primary:hover{background:var(--soil-950);}
-  .btn-ghost{border-color:var(--hair);color:var(--ink);}
-  .btn-ghost:hover{border-color:var(--leaf-700);color:var(--leaf-700);}
+  input:focus, select:focus{outline:2px solid var(--leaf-600);outline-offset:1px;}
 
-  /* Hero visual: recreated app card */
-  .device{
-    background:var(--paper-card);
-    border-radius:20px;
-    border:1px solid var(--hair);
-    box-shadow:0 24px 48px -24px rgba(23,33,15,0.28);
-    overflow:hidden;
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--hair);background:var(--paper);border-radius:9px;padding:9px 16px;
+    font-family:inherit;font-size:0.86rem;color:var(--ink-soft);cursor:pointer;
   }
-  .device-top{
-    background:linear-gradient(160deg,#1a7a3c,#0f5a2c);
-    color:#fff;padding:22px 20px 26px;
-  }
-  .device-top .tiny{font-size:0.68rem;letter-spacing:0.08em;color:rgba(255,255,255,0.55);text-transform:uppercase;}
-  .device-top .name{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;margin-top:2px;}
-  .device-top .sub{font-size:0.82rem;color:rgba(255,255,255,0.7);margin-top:2px;}
-  .device-methods{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px;
-  }
-  .method-chip{
-    background:var(--leaf-100);border-radius:12px;padding:10px 12px;font-size:0.8rem;color:var(--soil-800);
-  }
-  .method-chip b{display:block;font-size:0.86rem;color:var(--soil-950);}
-  .method-chip.active{background:var(--leaf-700);color:#fff;}
-  .method-chip.active b{color:#fff;}
+  .chip.active{background:var(--leaf-700);border-color:var(--leaf-700);color:#fff;font-weight:600;}
 
-  /* Sections */
-  section{padding:64px 0;}
-  section.alt{background:var(--leaf-100);}
-  .section-head{max-width:52ch;margin-bottom:36px;}
-  .section-head h2{font-size:1.9rem;}
-  .section-head p{color:var(--ink-soft);margin-top:12px;}
+  .fert-list{display:flex;flex-direction:column;border:1px solid var(--hair);border-radius:12px;overflow:hidden;}
+  .fert-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:0.9rem;cursor:pointer;}
+  .fert-row:not(:last-child){border-bottom:1px solid var(--hair);}
+  .fert-row input{width:18px;height:18px;accent-color:var(--leaf-700);}
 
-  .methods-list{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;
+  .btn-calc, .btn-secondary{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    padding:14px 20px;border-radius:12px;font-family:inherit;font-weight:600;font-size:0.98rem;
+    border:none;cursor:pointer;margin-top:18px;
   }
-  .method-card{
-    background:var(--paper-card);border:1px solid var(--hair);border-radius:14px;padding:22px;
-  }
-  .method-card .unit{color:var(--clay-dark);font-weight:600;font-size:0.82rem;}
-  .method-card h3{font-size:1.15rem;margin-top:4px;}
-  .method-card p{color:var(--ink-soft);font-size:0.92rem;margin-top:8px;}
+  .btn-calc{background:var(--leaf-700);color:#fff;}
+  .btn-calc:hover{background:var(--soil-950);}
+  .btn-secondary{background:var(--leaf-100);color:var(--leaf-700);}
+  .btn-secondary:hover{background:#d5e3d3;}
 
-  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
-  .flow-step{position:relative;padding:0 18px 0 0;}
-  .flow-step:not(:last-child)::after{
-    content:"";position:absolute;top:17px;right:-2px;width:calc(100% - 8px);height:1px;background:var(--hair);
-  }
-  .flow-dot{
-    width:34px;height:34px;border-radius:50%;background:var(--paper-card);border:1.5px solid var(--leaf-700);
-    color:var(--leaf-700);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:600;
-    position:relative;z-index:1;
-  }
-  .flow-step h3{font-size:1rem;margin-top:14px;}
-  .flow-step p{font-size:0.88rem;color:var(--ink-soft);margin-top:6px;}
+  .hint{font-size:0.78rem;color:var(--ink-soft);margin:8px 2px 0;line-height:1.4;}
 
-  .safety{
-    background:var(--warn-bg);border:1px solid #ecc7a3;border-radius:16px;padding:28px 30px;
-  }
-  .safety h2{font-size:1.3rem;color:var(--warn-ink);}
-  .safety ul{margin:16px 0 0;padding-left:20px;color:#5c3110;}
-  .safety li{margin-bottom:8px;}
+  .items-card{border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin-top:4px;}
+  .item-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:0.88rem;}
+  .item-row:not(:last-child){border-bottom:1px solid var(--hair);}
+  .item-sub{font-size:0.78rem;color:var(--ink-soft);}
+  .item-remove{cursor:pointer;color:var(--ink-soft);font-size:1rem;padding:4px;}
+  .item-remove:hover{color:var(--err-ink);}
+  .link-danger{color:#b3392e;cursor:pointer;font-weight:600;font-size:0.78rem;float:right;}
 
-  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
-  .about-grid p{color:var(--ink-soft);}
-  .fact{border-top:1px solid var(--hair);padding:14px 0;}
-  .fact b{color:var(--soil-950);}
+  .result-card{background:var(--paper-card);border:1px solid var(--hair);border-radius:16px;overflow:hidden;}
+  .result-header{background:var(--leaf-100);color:var(--leaf-700);font-size:0.78rem;font-weight:700;padding:12px 18px;}
+  .result-header.alt{background:var(--paper);color:var(--ink-soft);}
+  .result-row{display:flex;justify-content:space-between;padding:13px 18px;font-size:0.92rem;border-top:1px solid var(--hair);}
+  .result-row b{color:var(--leaf-700);}
+  .result-error{background:var(--err-bg);color:var(--err-ink);border-radius:14px;padding:16px 18px;font-size:0.9rem;}
 
-  footer{
-    padding:40px 0 60px;border-top:1px solid var(--hair);
-  }
-  .footer-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;}
-  footer .brand{margin-bottom:8px;}
-  footer p{color:var(--ink-soft);font-size:0.88rem;max-width:40ch;}
-  .footer-links a{display:block;color:var(--ink-soft);text-decoration:none;font-size:0.9rem;margin-bottom:8px;}
-  .footer-links a:hover{color:var(--leaf-700);}
-
-  @media (max-width:800px){
-    .hero-grid{grid-template-columns:1fr;}
-    .about-grid{grid-template-columns:1fr;}
-    .flow{grid-template-columns:1fr 1fr;row-gap:26px;}
-    .flow-step::after{display:none;}
-  }
+  #resultados{margin-top:20px;}
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <div class="brand"><span class="mark">A</span> AgroCalculadora</div>
-    <nav>
-      <a href="#metodos">Métodos</a>
-      <a href="#flujo">Cómo funciona</a>
-      <a href="#seguridad">Seguridad</a>
-      <a href="#contacto">Contacto</a>
-    </nav>
+    <span class="mark">A</span>
+    <h1>AgroCalculadora<small>Dosis de precisión para cada cultivo — versión web</small></h1>
   </div>
 </header>
 
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <div class="kicker">Nutrición vegetal</div>
-      <h1>Dosis de precisión para cada cultivo</h1>
-      <p class="lead">Una herramienta de bolsillo para agrónomos y productores: calcula dosis de fertilizantes en campo abierto, hidroponía y fertirriego, y exporta el resultado como un plan de aplicación listo para compartir.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="#" id="play-link">Descargar en Google Play</a>
-        <a class="btn btn-ghost" href="#metodos">Ver los 7 métodos</a>
-      </div>
-    </div>
-    <div class="device">
-      <div class="device-top">
-        <div class="tiny">Nutrición vegetal</div>
-        <div class="name">AgroCalculadora</div>
-        <div class="sub">Dosis de precisión para cada cultivo</div>
-      </div>
-      <div class="device-methods">
-        <div class="method-chip active"><b>Unidades</b>kg / ha</div>
-        <div class="method-chip"><b>ppm</b>mg / L</div>
-        <div class="method-chip"><b>CE</b>dS / m</div>
-        <div class="method-chip"><b>mEq/L</b>Miliequivalentes</div>
-        <div class="method-chip"><b>Micro</b>Fe · Mn · Zn</div>
-        <div class="method-chip"><b>pH</b>Neutralización</div>
-      </div>
-    </div>
-  </div>
-</section>
+<div class="wrap">
 
-<section id="metodos">
-  <div class="wrap">
-    <div class="section-head">
-      <h2>Siete formas de resolver una receta</h2>
-      <p>Cada método responde a una forma distinta de trabajar la nutrición vegetal, desde el campo abierto hasta la solución nutritiva más ajustada.</p>
-    </div>
-    <div class="methods-list">
-      <div class="method-card">
-        <div class="unit">kg / ha</div>
-        <h3>Unidades</h3>
-        <p>Dosis por hectárea para agricultura convencional en campo abierto, a partir de los kilos de N, P₂O₅, K₂O, Ca, Mg y S que necesita el cultivo.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">mg / L</div>
-        <h3>ppm</h3>
-        <p>Concentraciones en partes por millón para hidroponía y fertirriego, balanceando cationes y aniones en el volumen de agua real.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">dS / m</div>
-        <h3>Conductividad eléctrica</h3>
-        <p>Mezclas de fertilizantes para alcanzar una CE objetivo, con tablas de referencia para soluciones nutritivas equilibradas.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">meq / L</div>
-        <h3>Miliequivalentes</h3>
-        <p>El método más preciso para balancear soluciones hidropónicas profesionales, catión por catión y anión por anión.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">mg / L</div>
-        <h3>Microelementos</h3>
-        <p>Dosis de Fe, Mn, Zn, Cu, B y Mo ajustadas al porcentaje real del quelato o sal que se esté usando.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">meq / L → mL</div>
-        <h3>Neutralización de pH</h3>
-        <p>Cantidad de ácido nítrico, fosfórico o sulfúrico necesaria para neutralizar los bicarbonatos del agua de riego.</p>
-      </div>
-      <div class="method-card">
-        <div class="unit">g / mL → meq/L</div>
-        <h3>Conversión</h3>
-        <p>Toma una receta ya armada, con uno o varios fertilizantes y ácidos, y calcula el aporte real de ppm y meq/L que entrega a la solución.</p>
-      </div>
-    </div>
+  <div class="method-grid" id="method-grid">
+    <button type="button" class="method-btn" data-method="UNIDADES"><b>Unidades</b>kg / ha</button>
+    <button type="button" class="method-btn" data-method="PPM"><b>ppm</b>mg / L</button>
+    <button type="button" class="method-btn" data-method="CE"><b>CE</b>dS / m</button>
+    <button type="button" class="method-btn" data-method="MEQ"><b>mEq / L</b>Miliequivalentes</button>
+    <button type="button" class="method-btn" data-method="MICROELEMENTOS"><b>Micro</b>Fe · Mn · Zn</button>
+    <button type="button" class="method-btn" data-method="NEUTRALIZACION"><b>pH</b>Neutralización</button>
+    <button type="button" class="method-btn" data-method="INVERSO"><b>Conversión</b>g/mL → meq/L</button>
   </div>
-</section>
 
-<section class="alt" id="flujo">
-  <div class="wrap">
-    <div class="section-head">
-      <h2>De la dosis al plan de aplicación</h2>
-      <p>Pensada para el trabajo diario de un técnico en campo, sin cuentas ni configuración previa.</p>
-    </div>
-    <div class="flow">
-      <div class="flow-step">
-        <div class="flow-dot">1</div>
-        <h3>Elegí el método</h3>
-        <p>Según cómo trabajes: kg/ha, ppm, CE, meq/L, microelementos, pH o conversión de una receta ya usada.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-dot">2</div>
-        <h3>Cargá los valores</h3>
-        <p>Volumen de agua, nutrientes objetivo y los fertilizantes disponibles para esa mezcla.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-dot">3</div>
-        <h3>Calculá la dosis</h3>
-        <p>La app resuelve la receta y muestra las cantidades exactas de cada producto.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-dot">4</div>
-        <h3>Exportá el PDF</h3>
-        <p>Un plan de aplicación con tus datos como responsable técnico, listo para enviar al productor.</p>
-      </div>
-    </div>
-  </div>
-</section>
+  <div class="panel-card">
 
-<section id="seguridad">
-  <div class="wrap">
-    <div class="about-grid">
-      <div>
-        <h2>Cómo se usan tus datos</h2>
-        <p>AgroCalculadora no pide crear una cuenta ni inicio de sesión.</p>
-        <div class="fact">
-          <b>Tu perfil profesional.</b> Nombre, empresa, teléfono y correo se guardan únicamente en tu dispositivo, para que no tengas que volver a escribirlos cada vez que generás un plan de aplicación.
-        </div>
-        <div class="fact">
-          <b>Los datos de cada receta.</b> Nombre del productor, cultivo y superficie se usan solo para armar ese PDF puntual y no quedan almacenados en ningún servidor.
-        </div>
-        <div class="fact">
-          <b>Publicidad.</b> La app se sostiene con anuncios de Google AdMob, que puede usar un identificador de publicidad del dispositivo para mostrar y medir esos anuncios.
-        </div>
-      </div>
-      <div class="safety">
-        <h2>Consejos de manejo de ácidos</h2>
-        <ul>
-          <li>Agregá siempre el ácido sobre el agua, nunca al revés.</li>
-          <li>Usá guantes de nitrilo y gafas de seguridad con ácidos concentrados.</li>
-          <li>Trabajá en un área ventilada al usar ácido nítrico.</li>
-          <li>Almacená los ácidos en un lugar fresco, seco y fuera del alcance de niños.</li>
-          <li>Calibrá tu medidor de pH antes de cada uso.</li>
-        </ul>
+    <div class="method-panel" data-method="UNIDADES">
+      <div class="section-label">Nutrientes requeridos (kg/ha)</div>
+      <div class="field-grid">
+        <label>Nitrógeno (N)<input id="nRequerido" type="number" step="any"></label>
+        <label>Fósforo (P₂O₅)<input id="pRequerido" type="number" step="any"></label>
+        <label>Potasio (K₂O)<input id="kRequerido" type="number" step="any"></label>
+        <label>Calcio (Ca)<input id="caRequerido" type="number" step="any"></label>
+        <label>Magnesio (Mg)<input id="mgRequerido" type="number" step="any"></label>
+        <label>Azufre (S)<input id="sRequerido" type="number" step="any"></label>
       </div>
     </div>
-  </div>
-</section>
 
-<footer id="contacto">
-  <div class="wrap footer-grid">
-    <div>
-      <div class="brand">AgroCalculadora</div>
-      <p>Herramienta profesional de cálculo de dosis para agricultura, hidroponía y fertirriego. Ciencia aplicada a la salud de tu cultivo.</p>
+    <div class="method-panel" data-method="PPM" style="display:none">
+      <div class="section-label">Volumen de agua</div>
+      <div class="field-grid"><label>Agua (L)<input class="vol-input" type="number" step="any"></label></div>
+      <div class="section-label">Cationes (ppm)</div>
+      <div class="field-grid">
+        <label>Calcio (Ca²⁺)<input id="caPpmRequerido" type="number" step="any"></label>
+        <label>Potasio (K⁺)<input id="kPpmRequerido" type="number" step="any"></label>
+        <label>Magnesio (Mg²⁺)<input id="mgPpmRequerido" type="number" step="any"></label>
+        <label>Amonio (NH₄⁺)<input id="amonioRequerido" type="number" step="any"></label>
+      </div>
+      <div class="section-label">Aniones (ppm)</div>
+      <div class="field-grid">
+        <label>Nitrato (NO₃⁻)<input id="nitratosRequerido" type="number" step="any"></label>
+        <label>Fosfato (H₂PO₄⁻)<input id="pPpmRequerido" type="number" step="any"></label>
+        <label>Sulfato (SO₄²⁻)<input id="sPpmRequerido" type="number" step="any"></label>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="mailto:contacto@doctor-cultivo.com">contacto@doctor-cultivo.com</a>
-      <a href="https://github.com/Doctor-Cultivo-Sinsuelo/Agro-calculadora">Repositorio en GitHub</a>
+
+    <div class="method-panel" data-method="CE" style="display:none">
+      <div class="section-label">Parámetros</div>
+      <div class="field-grid">
+        <label>CE objetivo (dS/m)
+          <select id="ceRequerida">
+            <option value="0.5">0.5</option><option value="1.0">1.0</option>
+            <option value="1.5" selected>1.5</option><option value="2.0">2.0</option>
+            <option value="2.5">2.5</option><option value="3.0">3.0</option>
+          </select>
+        </label>
+        <label>Volumen (L)<input class="vol-input" type="number" step="any"></label>
+      </div>
     </div>
+
+    <div class="method-panel" data-method="MEQ" style="display:none">
+      <div class="section-label">Volumen de agua</div>
+      <div class="field-grid"><label>Agua (L)<input class="vol-input" type="number" step="any"></label></div>
+      <div class="section-label">Cationes (meq/L)</div>
+      <div class="field-grid">
+        <label>Calcio (Ca²⁺)<input id="calcioRequerido" type="number" step="any"></label>
+        <label>Potasio (K⁺)<input id="potasioRequerido" type="number" step="any"></label>
+        <label>Magnesio (Mg²⁺)<input id="magnesioRequerido" type="number" step="any"></label>
+        <label>Amonio (NH₄⁺)<input id="amonioMeqRequerido" type="number" step="any"></label>
+      </div>
+      <div class="section-label">Aniones (meq/L)</div>
+      <div class="field-grid">
+        <label>Nitrato (NO₃⁻)<input id="nitratoMeqRequerido" type="number" step="any"></label>
+        <label>Fosfato (H₂PO₄⁻)<input id="fosfatoRequerido" type="number" step="any"></label>
+        <label>Sulfato (SO₄²⁻)<input id="sulfatoRequerido" type="number" step="any"></label>
+      </div>
+    </div>
+
+    <div class="method-panel" data-method="MICROELEMENTOS" style="display:none">
+      <div class="section-label">Volumen de agua</div>
+      <div class="field-grid"><label>Agua (L)<input class="vol-input" type="number" step="any"></label></div>
+      <div class="section-label">Microelementos (mg/L)</div>
+      <div class="field-grid">
+        <label>Hierro (Fe)<input id="feDeseado" type="number" step="any"></label>
+        <label>% Fe en quelato<input id="fePorcentaje" type="number" step="any"></label>
+        <label>Manganeso (Mn)<input id="mnDeseado" type="number" step="any"></label>
+        <label>Zinc (Zn)<input id="znDeseado" type="number" step="any"></label>
+        <label>Cobre (Cu)<input id="cuDeseado" type="number" step="any"></label>
+        <label>Boro (B)<input id="bDeseado" type="number" step="any"></label>
+        <label>Molibdeno (Mo)<input id="moDeseado" type="number" step="any"></label>
+      </div>
+    </div>
+
+    <div class="method-panel" data-method="NEUTRALIZACION" style="display:none">
+      <div class="section-label">Agua</div>
+      <div class="field-grid">
+        <label>Volumen (L)<input class="vol-input" type="number" step="any"></label>
+        <label>Bicarbonatos (meq/L)<input id="bicarbonatos" type="number" step="any"></label>
+      </div>
+      <div class="section-label">Tipo de ácido</div>
+      <div class="chip-row" id="tipoAcido-chips">
+        <button type="button" class="chip active" data-acido="Nítrico">Nítrico</button>
+        <button type="button" class="chip" data-acido="Fosfórico">Fosfórico</button>
+        <button type="button" class="chip" data-acido="Sulfúrico">Sulfúrico</button>
+      </div>
+      <div class="section-label">Producto comercial</div>
+      <div class="field-grid">
+        <label>Densidad (g/mL)<input id="densidadAcido" type="number" step="any"></label>
+        <label>Pureza (%)<input id="purezaAcido" type="number" step="any"></label>
+      </div>
+      <button type="button" class="btn-calc" id="btn-calc-neutralizacion">Calcular ácido</button>
+    </div>
+
+    <div class="method-panel" data-method="INVERSO" style="display:none">
+      <div class="section-label">Volumen de agua de la receta</div>
+      <div class="field-grid"><label>Volumen total (L)<input id="volumenInverso" type="number" step="any"></label></div>
+      <div class="section-label">Agregar producto a la receta</div>
+      <div class="chip-row" id="inversoTipo-chips">
+        <button type="button" class="chip active" data-tipo="CONOCIDO">Conocido</button>
+        <button type="button" class="chip" data-tipo="PERSONALIZADO">Personalizado</button>
+        <button type="button" class="chip" data-tipo="ACIDO">Ácido</button>
+      </div>
+      <div id="inverso-subform"></div>
+      <button type="button" class="btn-secondary" id="btn-agregar-inverso">+ Agregar a la receta</button>
+      <div id="inverso-items"></div>
+      <button type="button" class="btn-calc" id="btn-calc-inverso">Calcular receta</button>
+    </div>
+
+    <div id="fert-panel" style="display:none;margin-top:8px;"></div>
+
+    <button type="button" class="btn-calc" id="main-calc-btn">Calcular receta</button>
+
   </div>
-</footer>
+
+  <div id="resultados"></div>
+
+</div>
+
+<script>
+(function(){
+
+// ═══════════════════════════════════════════════════════════════════
+// DATOS DE FERTILIZANTES (idénticos a RecetaViewModel.kt)
+// ═══════════════════════════════════════════════════════════════════
+
+const nombresFertilizantesMacro = [
+  "Nitrato de Calcio","Nitrato de Potasio","Fosfato Monoamónico (MAP)","Fosfato Diamónico (DAP)",
+  "Sulfato de Magnesio","Sulfato de Potasio","Nitrato de Magnesio","Sulfato de amonio",
+  "Fosfato monopotasico","Fosfonitrato","Urea"
+];
+const nombresFertilizantesMicro = [
+  "Quelato de hierro","Sulfato ferroso","Sulfato de cobre","Sulfato de zinc",
+  "Sulfato de manganeso","Ácido bórico","Molibdato"
+];
+
+const fertilizantesConocidosComposicion = [
+  {nombre:"Nitrato de Calcio",        composicion:{N:0.155, Ca:0.19}},
+  {nombre:"Fosfato monopotasico",      composicion:{P2O5:0.52, K2O:0.34}},
+  {nombre:"Fosfato Monoamónico (MAP)", composicion:{N:0.12, P2O5:0.61}},
+  {nombre:"Fosfato Diamónico (DAP)",   composicion:{N:0.18, P2O5:0.46}},
+  {nombre:"Nitrato de Potasio",        composicion:{N:0.13, K2O:0.46}},
+  {nombre:"Sulfato de Potasio",        composicion:{K2O:0.50, SO4:0.18}},
+  {nombre:"Urea",                      composicion:{N:0.46}},
+  {nombre:"Sulfato de Magnesio",       composicion:{Mg:0.0986, SO4:0.13}},
+  {nombre:"Nitrato de Magnesio",       composicion:{Mg:0.0948, N:0.109}},
+  {nombre:"Sulfato de amonio",         composicion:{N:0.21, SO4:0.24}},
+  {nombre:"Nitrato de Amonio",         composicion:{N:0.34}},
+  {nombre:"Fosfonitrato",              composicion:{N:0.33, P2O5:0.03}},
+  {nombre:"Sulfato ferroso",           composicion:{Fe:0.2009}},
+  {nombre:"Sulfato de cobre",          composicion:{Cu:0.2545}},
+  {nombre:"Sulfato de zinc",           composicion:{Zn:0.2274}},
+  {nombre:"Sulfato de manganeso",      composicion:{Mn:0.3250}},
+  {nombre:"Ácido bórico",              composicion:{B:0.1749}},
+  {nombre:"Molibdato",                 composicion:{Mo:0.5436}},
+];
+
+const pesosEquivalentesSalConocida = {
+  "Nitrato de Calcio":118.08, "Fosfato monopotasico":136.09, "Fosfato Monoamónico (MAP)":115.03,
+  "Fosfato Diamónico (DAP)":66.03, "Nitrato de Potasio":101.10, "Sulfato de Potasio":87.13,
+  "Sulfato de Magnesio":123.24, "Nitrato de Magnesio":128.21, "Sulfato de amonio":66.07,
+  "Nitrato de Amonio":80.04
+};
+
+const ionesPorSalConocida = {
+  "Nitrato de Calcio":["Ca²⁺","NO₃⁻"], "Fosfato monopotasico":["K⁺","H₂PO₄⁻"],
+  "Fosfato Monoamónico (MAP)":["NH₄⁺","H₂PO₄⁻"], "Fosfato Diamónico (DAP)":["NH₄⁺","H₂PO₄⁻"],
+  "Nitrato de Potasio":["K⁺","NO₃⁻"], "Sulfato de Potasio":["K⁺","SO₄²⁻"],
+  "Sulfato de Magnesio":["Mg²⁺","SO₄²⁻"], "Nitrato de Magnesio":["Mg²⁺","NO₃⁻"],
+  "Sulfato de amonio":["NH₄⁺","SO₄²⁻"], "Nitrato de Amonio":["NH₄⁺","NO₃⁻"]
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════════
+
+const state = {
+  tipoSeleccionado:'UNIDADES', volumen:'1000',
+  nRequerido:'', pRequerido:'', kRequerido:'', caRequerido:'', mgRequerido:'', sRequerido:'',
+  caPpmRequerido:'', kPpmRequerido:'', mgPpmRequerido:'', pPpmRequerido:'', sPpmRequerido:'',
+  nitratosRequerido:'', amonioRequerido:'',
+  ceRequerida:'1.5',
+  calcioRequerido:'', potasioRequerido:'', magnesioRequerido:'', amonioMeqRequerido:'',
+  nitratoMeqRequerido:'', fosfatoRequerido:'', sulfatoRequerido:'',
+  feDeseado:'', fePorcentaje:'', mnDeseado:'', znDeseado:'', cuDeseado:'', bDeseado:'', moDeseado:'',
+  bicarbonatos:'', tipoAcido:'Nítrico', densidadAcido:'', purezaAcido:'', resultadoNeutralizacion:'',
+  volumenInverso:'1000', inversoTipoItem:'CONOCIDO', fertilizanteInversoSeleccionado:'Nitrato de Calcio',
+  inversoEsLiquido:false, inversoDensidad:'', inversoNombrePersonalizado:'',
+  inversoPctN:'', inversoPctNO3deN:'', inversoPctP2O5:'', inversoPctK2O:'', inversoPctCa:'',
+  inversoPctMg:'', inversoPctS:'', inversoPctFe:'', inversoPctMn:'', inversoPctZn:'',
+  inversoPctCu:'', inversoPctB:'', inversoPctMo:'',
+  inversoTipoAcido:'Nítrico', inversoDensidadAcido:'', inversoPurezaAcido:'',
+  cantidadInversa:'', itemsInverso:[]
+};
+
+const fertilizantesSeleccionados = {};
+[...nombresFertilizantesMacro, ...nombresFertilizantesMicro].forEach(n=>fertilizantesSeleccionados[n]=false);
+["Nitrato de Calcio","Nitrato de Potasio","Sulfato de Magnesio","Sulfato ferroso","Sulfato de cobre"].forEach(n=>fertilizantesSeleccionados[n]=true);
+
+let resultadosFertilizantes = {};
+let resultadosNutrientesAportados = {};
+let mensajeError = null;
+let _nextId = 1;
+
+function num(s){ const v = parseFloat(s); return isNaN(v) ? 0 : v; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatearGramos(valor){ if(valor>=1) return valor.toFixed(2)+' g'; if(valor>0) return valor.toFixed(3)+' g'; return ''; }
+function nextId(){ return _nextId++; }
+
+// ═══════════════════════════════════════════════════════════════════
+// CÁLCULOS (portados 1:1 desde RecetaViewModel.kt)
+// ═══════════════════════════════════════════════════════════════════
+
+function calcularUnidades(){
+  const resultados = {};
+  const reqN=num(state.nRequerido), reqP=num(state.pRequerido), reqK=num(state.kRequerido),
+        reqCa=num(state.caRequerido), reqMg=num(state.mgRequerido), reqSO4=num(state.sRequerido);
+  const base = {N:reqN,P2O5:reqP,K2O:reqK,Ca:reqCa,Mg:reqMg,SO4:reqSO4};
+  let requerimientos = {};
+  Object.entries(base).forEach(([k,v])=>{ if(v>0) requerimientos[k]=v; });
+
+  const todosFertilizantes = [
+    {nombre:"Nitrato de Calcio", concentraciones:{N:0.155, Ca:0.19}},
+    {nombre:"Fosfato monopotasico", concentraciones:{P2O5:0.52, K2O:0.34}},
+    {nombre:"Fosfato Monoamónico (MAP)", concentraciones:{N:0.12, P2O5:0.61}},
+    {nombre:"Fosfato Diamónico (DAP)", concentraciones:{N:0.18, P2O5:0.46}},
+    {nombre:"Nitrato de Potasio", concentraciones:{N:0.13, K2O:0.46}},
+    {nombre:"Sulfato de Potasio", concentraciones:{K2O:0.50, SO4:0.18}},
+    {nombre:"Fosfonitrato", concentraciones:{N:0.33, P2O5:0.03}},
+    {nombre:"Urea", concentraciones:{N:0.46}},
+    {nombre:"Sulfato de Magnesio", concentraciones:{Mg:0.0986, SO4:0.13}},
+    {nombre:"Nitrato de Magnesio", concentraciones:{Mg:0.0948, N:0.109}},
+    {nombre:"Sulfato de amonio", concentraciones:{N:0.21, SO4:0.24}},
+  ];
+  const fertilizantesFiltrados = todosFertilizantes.filter(f=>fertilizantesSeleccionados[f.nombre]);
+  const fertilizantesPrioridadN = new Set(["Urea","Fosfonitrato"]);
+
+  function calcularDosis(fert, reqs){
+    const nutrientesAfectados = Object.keys(fert.concentraciones).filter(k=>k in reqs);
+    if(nutrientesAfectados.length===0) return [0, reqs];
+    let nutrientesParaDosis;
+    if(fertilizantesPrioridadN.has(fert.nombre)) nutrientesParaDosis = ("N" in reqs) ? ["N"] : nutrientesAfectados;
+    else { const noN = nutrientesAfectados.filter(k=>k!=="N"); nutrientesParaDosis = noN.length>0 ? noN : nutrientesAfectados; }
+    let dosisMax=0;
+    for(const nut of nutrientesParaDosis){
+      const req=reqs[nut]||0, conc=fert.concentraciones[nut]||0;
+      if(req>0 && conc>0){ const dosis=req/conc; if(dosis>dosisMax) dosisMax=dosis; }
+    }
+    if(dosisMax===0) return [0, reqs];
+    const nuevosReqs = {...reqs};
+    for(const [nut,conc] of Object.entries(fert.concentraciones)){
+      const aporte = dosisMax*conc;
+      if(nut in nuevosReqs){ const nv = nuevosReqs[nut]-aporte; if(nv<=0.001) delete nuevosReqs[nut]; else nuevosReqs[nut]=nv; }
+    }
+    return [dosisMax, nuevosReqs];
+  }
+
+  let reqsActuales = requerimientos;
+  for(const fert of fertilizantesFiltrados){
+    const [dosis, nuevosReqs] = calcularDosis(fert, reqsActuales);
+    if(dosis>0){ resultados[fert.nombre] = `${Math.round(dosis)} kg`; reqsActuales = nuevosReqs; }
+  }
+  if(Object.keys(reqsActuales).length>0)
+    resultados["⚠️ Sin cubrir"] = Object.entries(reqsActuales).map(([k,v])=>`${k}: ${Math.round(v)} kg`).join(", ");
+
+  resultadosFertilizantes = resultados; resultadosNutrientesAportados = {};
+}
+
+function calcularPPM(){
+  const resultados = {};
+  const vol = num(state.volumen) || 1000;
+  if(vol<=0){ mensajeError="El volumen debe ser mayor a 0"; return; }
+  const sel = fertilizantesSeleccionados;
+
+  let no3Restante = num(state.nitratosRequerido)/4.427;
+  let nh4Restante = num(state.amonioRequerido)/1.288;
+  let kRestante = num(state.kPpmRequerido);
+  let caRestante = num(state.caPpmRequerido);
+  let mgRestante = num(state.mgPpmRequerido);
+  let pRestante = num(state.pPpmRequerido)/3.132;
+  let sRestante = num(state.sPpmRequerido)/2.996;
+  let no3Cubierto=0, nh4Cubierto=0, kCubierto=0, caCubierto=0, mgCubierto=0, pCubierto=0, sCubierto=0;
+
+  if(sel["Nitrato de Calcio"] && caRestante>0){
+    const cantidad=caRestante/0.19, gramos=(cantidad*vol)/1000;
+    resultados["Nitrato de Calcio (por Ca)"]=formatearGramos(gramos);
+    const no3Aportado=cantidad*0.155; no3Restante=Math.max(0,no3Restante-no3Aportado);
+    caCubierto+=caRestante; no3Cubierto+=no3Aportado; caRestante=0;
+  }
+  if(kRestante>0){
+    if(sel["Nitrato de Potasio"]){
+      const cantidad=kRestante/0.387, gramos=(cantidad*vol)/1000;
+      resultados["Nitrato de Potasio (por K)"]=formatearGramos(gramos);
+      const no3Aportado=cantidad*0.139; no3Restante=Math.max(0,no3Restante-no3Aportado);
+      kCubierto+=kRestante; no3Cubierto+=no3Aportado; kRestante=0;
+    } else if(sel["Fosfato monopotasico"]){
+      const cantidad=kRestante/0.287, gramos=(cantidad*vol)/1000;
+      resultados["Fosfato monopotasico (por K)"]=formatearGramos(gramos);
+      const pAportado=cantidad*0.228; pRestante=Math.max(0,pRestante-pAportado);
+      kCubierto+=kRestante; pCubierto+=pAportado; kRestante=0;
+    } else if(sel["Sulfato de Potasio"]){
+      const cantidad=kRestante/0.449, gramos=(cantidad*vol)/1000;
+      resultados["Sulfato de Potasio (por K)"]=formatearGramos(gramos);
+      const sAportado=cantidad*0.184; sRestante=Math.max(0,sRestante-sAportado);
+      kCubierto+=kRestante; sCubierto+=sAportado; kRestante=0;
+    }
+  }
+  if(mgRestante>0){
+    if(sel["Sulfato de Magnesio"]){
+      const cantidad=mgRestante/0.0986, gramos=(cantidad*vol)/1000;
+      resultados["Sulfato de Magnesio (por Mg)"]=formatearGramos(gramos);
+      const sAportado=cantidad*0.1301; sRestante=Math.max(0,sRestante-sAportado);
+      mgCubierto+=mgRestante; sCubierto+=sAportado; mgRestante=0;
+    } else if(sel["Nitrato de Magnesio"]){
+      const cantidad=mgRestante/0.0948, gramos=(cantidad*vol)/1000;
+      resultados["Nitrato de Magnesio (por Mg)"]=formatearGramos(gramos);
+      const no3Aportado=cantidad*0.109; no3Restante=Math.max(0,no3Restante-no3Aportado);
+      mgCubierto+=mgRestante; no3Cubierto+=no3Aportado; mgRestante=0;
+    }
+  }
+  if(sel["Fosfato Monoamónico (MAP)"] && (pRestante>0 || nh4Restante>0)){
+    const cantidadPorP = pRestante>0 ? pRestante/0.27 : Number.MAX_VALUE;
+    const cantidadPorNH4 = nh4Restante>0 ? nh4Restante/0.12 : Number.MAX_VALUE;
+    const cantidad = Math.min(cantidadPorP, cantidadPorNH4), gramos=(cantidad*vol)/1000;
+    const nh4Aportado=cantidad*0.12, pAportado=cantidad*0.27;
+    resultados["Fosfato Monoamónico (MAP)"]=formatearGramos(gramos);
+    pRestante=Math.max(0,pRestante-pAportado); nh4Restante=Math.max(0,nh4Restante-nh4Aportado);
+    pCubierto+=pAportado; nh4Cubierto+=nh4Aportado;
+  } else if(sel["Fosfato Diamónico (DAP)"] && (pRestante>0 || nh4Restante>0)){
+    const cantidadPorP = pRestante>0 ? pRestante/0.2008 : Number.MAX_VALUE;
+    const cantidadPorNH4 = nh4Restante>0 ? nh4Restante/0.18 : Number.MAX_VALUE;
+    const cantidad = Math.min(cantidadPorP, cantidadPorNH4), gramos=(cantidad*vol)/1000;
+    const nh4Aportado=cantidad*0.18, pAportado=cantidad*0.2008;
+    resultados["Fosfato Diamónico (DAP)"]=formatearGramos(gramos);
+    pRestante=Math.max(0,pRestante-pAportado); nh4Restante=Math.max(0,nh4Restante-nh4Aportado);
+    pCubierto+=pAportado; nh4Cubierto+=nh4Aportado;
+  }
+  if(sel["Sulfato de amonio"] && (nh4Restante>0 || sRestante>0)){
+    const cantidadPorNH4 = nh4Restante>0 ? nh4Restante/0.212 : Number.MAX_VALUE;
+    const cantidadPorS = sRestante>0 ? sRestante/0.243 : Number.MAX_VALUE;
+    const cantidad = Math.min(cantidadPorNH4, cantidadPorS), gramos=(cantidad*vol)/1000;
+    const nh4Aportado=cantidad*0.212, sAportado=cantidad*0.243;
+    resultados["Sulfato de amonio"]=formatearGramos(gramos);
+    nh4Restante=Math.max(0,nh4Restante-nh4Aportado); sRestante=Math.max(0,sRestante-sAportado);
+    nh4Cubierto+=nh4Aportado; sCubierto+=sAportado;
+  }
+  if(no3Restante>0){
+    if(sel["Nitrato de Potasio"] && kRestante===0){
+      const cantidad=no3Restante/0.139, gramos=(cantidad*vol)/1000;
+      resultados["Nitrato de Potasio (por NO₃⁻)"]=formatearGramos(gramos);
+      no3Cubierto+=no3Restante; kCubierto+=cantidad*0.387; no3Restante=0;
+    } else if(sel["Nitrato de Magnesio"] && mgRestante===0){
+      const cantidad=no3Restante/0.109, gramos=(cantidad*vol)/1000;
+      resultados["Nitrato de Magnesio (por NO₃⁻)"]=formatearGramos(gramos);
+      no3Cubierto+=no3Restante; mgCubierto+=cantidad*0.0948; no3Restante=0;
+    } else if(sel["Nitrato de Calcio"] && caRestante===0){
+      const cantidad=no3Restante/0.155, gramos=(cantidad*vol)/1000;
+      resultados["Nitrato de Calcio (por NO₃⁻)"]=formatearGramos(gramos);
+      no3Cubierto+=no3Restante; caCubierto+=cantidad*0.19; no3Restante=0;
+    }
+  }
+  if(sRestante>0){
+    if(sel["Sulfato de Magnesio"] && mgRestante===0){
+      const cantidad=sRestante/0.1301, gramos=(cantidad*vol)/1000;
+      resultados["Sulfato de Magnesio (por S)"]=formatearGramos(gramos);
+      sCubierto+=sRestante; mgCubierto+=cantidad*0.0986; sRestante=0;
+    } else if(sel["Sulfato de Potasio"] && kRestante===0){
+      const cantidad=sRestante/0.184, gramos=(cantidad*vol)/1000;
+      resultados["Sulfato de Potasio (por S)"]=formatearGramos(gramos);
+      sCubierto+=sRestante; kCubierto+=cantidad*0.449; sRestante=0;
+    }
+  }
+
+  resultadosFertilizantes = resultados;
+  const aportes = {};
+  if(no3Cubierto>0) aportes["NO₃⁻ cubierto (ppm)"]=no3Cubierto*4.427;
+  if(nh4Cubierto>0) aportes["NH₄⁺ cubierto (ppm)"]=nh4Cubierto*1.288;
+  if(kCubierto>0) aportes["K⁺ cubierto (ppm)"]=kCubierto;
+  if(caCubierto>0) aportes["Ca²⁺ cubierto (ppm)"]=caCubierto;
+  if(mgCubierto>0) aportes["Mg²⁺ cubierto (ppm)"]=mgCubierto;
+  if(pCubierto>0) aportes["Fosfato cubierto (ppm)"]=pCubierto*3.132;
+  if(sCubierto>0) aportes["Sulfato cubierto (ppm)"]=sCubierto*2.996;
+  resultadosNutrientesAportados = aportes;
+}
+
+function calcularCE(){
+  const resultados = {};
+  const vol = num(state.volumen)||1000;
+  const ce = num(state.ceRequerida)||1.5;
+  const tabla = {
+    0.5:{"KNO₃":0.07,"Ca(NO₃)₂·4H₂O":0.2714,"MgSO₄·7H₂O":0.128,"NH₄H₂PO₄":0.02875,"K₂SO₄":0.0957},
+    1.0:{"KNO₃":0.14,"Ca(NO₃)₂·4H₂O":0.5428,"MgSO₄·7H₂O":0.256,"NH₄H₂PO₄":0.0575,"K₂SO₄":0.1914},
+    1.5:{"KNO₃":0.21,"Ca(NO₃)₂·4H₂O":0.8142,"MgSO₄·7H₂O":0.384,"NH₄H₂PO₄":0.08625,"K₂SO₄":0.2871},
+    2.0:{"KNO₃":0.28,"Ca(NO₃)₂·4H₂O":1.0856,"MgSO₄·7H₂O":0.512,"NH₄H₂PO₄":0.115,"K₂SO₄":0.3828},
+    2.5:{"KNO₃":0.35,"Ca(NO₃)₂·4H₂O":1.357,"MgSO₄·7H₂O":0.64,"NH₄H₂PO₄":0.14375,"K₂SO₄":0.4785},
+    3.0:{"KNO₃":0.42,"Ca(NO₃)₂·4H₂O":1.6284,"MgSO₄·7H₂O":0.768,"NH₄H₂PO₄":0.1725,"K₂SO₄":0.5742},
+  };
+  const valores = tabla[ce];
+  if(!valores){ mensajeError="CE no válida (elige entre 0.5, 1.0, 1.5, 2.0, 2.5, 3.0)"; return; }
+  Object.entries(valores).forEach(([nombre,gpl])=>{ resultados[nombre]=(gpl*vol).toFixed(2)+" g"; });
+  resultadosFertilizantes = resultados; resultadosNutrientesAportados = {};
+}
+
+function baseNombreAsignacion(nombre){ const idx=nombre.lastIndexOf(" ("); return idx===-1?nombre:nombre.substring(0,idx); }
+
+function calcularMEQ(){
+  const resultados = {};
+  const vol = num(state.volumen)||1000;
+  if(vol<=0){ mensajeError="El volumen debe ser mayor a 0"; return; }
+  const sel = fertilizantesSeleccionados;
+
+  let caRestante=num(state.calcioRequerido), kRestante=num(state.potasioRequerido),
+      mgRestante=num(state.magnesioRequerido), nh4Restante=num(state.amonioMeqRequerido),
+      no3Restante=num(state.nitratoMeqRequerido), h2po4Restante=num(state.fosfatoRequerido),
+      so4Restante=num(state.sulfatoRequerido);
+
+  const asignaciones = {};
+  const pesosEq = {
+    "Nitrato de Calcio":118.08, "Nitrato de Potasio":101.10, "Sulfato de Magnesio":123.24,
+    "Fosfato Monoamónico (MAP)":115.03, "Fosfato Diamónico (DAP)":66.03, "Sulfato de Potasio":87.13,
+    "Nitrato de Magnesio":128.21, "Sulfato de amonio":66.07, "Fosfato monopotasico":136.09,
+    "Fosfonitrato": 28.0/0.33
+  };
+
+  if(sel["Nitrato de Calcio"] && caRestante>0){ asignaciones["Nitrato de Calcio"]=caRestante; no3Restante-=caRestante; caRestante=0; }
+  if(sel["Fosfato monopotasico"] && (h2po4Restante>0 || kRestante>0)){
+    if(h2po4Restante>0){ asignaciones["Fosfato monopotasico (por P)"]=h2po4Restante; kRestante-=h2po4Restante; h2po4Restante=0; }
+    else if(kRestante>0){ asignaciones["Fosfato monopotasico (por K)"]=kRestante; h2po4Restante-=kRestante; kRestante=0; }
+  }
+  if(sel["Fosfato Monoamónico (MAP)"]){
+    if(h2po4Restante>0){ asignaciones["Fosfato Monoamónico (MAP) (por P)"]=h2po4Restante; nh4Restante-=h2po4Restante; h2po4Restante=0; }
+    else if(nh4Restante>0){ asignaciones["Fosfato Monoamónico (MAP) (por NH4)"]=nh4Restante; h2po4Restante-=nh4Restante; nh4Restante=0; }
+  } else if(sel["Fosfato Diamónico (DAP)"]){
+    if(h2po4Restante>0){ asignaciones["Fosfato Diamónico (DAP) (por P)"]=h2po4Restante; nh4Restante-=h2po4Restante; h2po4Restante=0; }
+    else if(nh4Restante>0){ asignaciones["Fosfato Diamónico (DAP) (por NH4)"]=nh4Restante; h2po4Restante-=nh4Restante; nh4Restante=0; }
+  }
+  if(kRestante>0){
+    if(sel["Nitrato de Potasio"]){ asignaciones["Nitrato de Potasio"]=kRestante; no3Restante-=kRestante; kRestante=0; }
+    else if(sel["Sulfato de Potasio"]){ asignaciones["Sulfato de Potasio"]=kRestante; so4Restante-=kRestante; kRestante=0; }
+  }
+  if(mgRestante>0){
+    if(sel["Sulfato de Magnesio"]){ asignaciones["Sulfato de Magnesio"]=mgRestante; so4Restante-=mgRestante; mgRestante=0; }
+    else if(sel["Nitrato de Magnesio"]){ asignaciones["Nitrato de Magnesio"]=mgRestante; no3Restante-=mgRestante; mgRestante=0; }
+  }
+  if(sel["Sulfato de amonio"] && (nh4Restante>0 || so4Restante>0)){
+    if(nh4Restante>0){ asignaciones["Sulfato de amonio (por NH4)"]=nh4Restante; so4Restante-=nh4Restante; nh4Restante=0; }
+    else if(so4Restante>0){ asignaciones["Sulfato de amonio (por SO4)"]=so4Restante; nh4Restante-=so4Restante; so4Restante=0; }
+  }
+  if(sel["Fosfonitrato"] && (no3Restante>0 || nh4Restante>0)){
+    if(no3Restante>0){ asignaciones["Fosfonitrato (por NO3)"]=no3Restante; nh4Restante-=no3Restante; no3Restante=0; }
+    else if(nh4Restante>0){ asignaciones["Fosfonitrato (por NH4)"]=nh4Restante; no3Restante-=nh4Restante; nh4Restante=0; }
+  }
+  if(no3Restante>0.1){
+    if(sel["Nitrato de Potasio"] && !("Nitrato de Potasio" in asignaciones)){ asignaciones["Nitrato de Potasio (adicional)"]=no3Restante; no3Restante=0; }
+    else if(sel["Nitrato de Magnesio"] && !("Nitrato de Magnesio" in asignaciones)){ asignaciones["Nitrato de Magnesio (adicional)"]=no3Restante; no3Restante=0; }
+    else if(sel["Nitrato de Calcio"] && !("Nitrato de Calcio" in asignaciones)){ asignaciones["Nitrato de Calcio (adicional)"]=no3Restante; no3Restante=0; }
+    else if(sel["Fosfonitrato"] && !("Fosfonitrato (por NO3)" in asignaciones) && !("Fosfonitrato (por NH4)" in asignaciones)){ asignaciones["Fosfonitrato (adicional, por NO3)"]=no3Restante; no3Restante=0; }
+  }
+  if(so4Restante>0.1){
+    if(sel["Sulfato de Magnesio"] && !("Sulfato de Magnesio" in asignaciones)){ asignaciones["Sulfato de Magnesio (adicional)"]=so4Restante; so4Restante=0; }
+    else if(sel["Sulfato de Potasio"] && !("Sulfato de Potasio" in asignaciones)){ asignaciones["Sulfato de Potasio (adicional)"]=so4Restante; so4Restante=0; }
+    else if(sel["Sulfato de amonio"] && !("Sulfato de amonio (por NH4)" in asignaciones) && !("Sulfato de amonio (por SO4)" in asignaciones)){ asignaciones["Sulfato de amonio (adicional)"]=so4Restante; so4Restante=0; }
+  }
+
+  for(const [nombre, meq] of Object.entries(asignaciones)){
+    const baseName = baseNombreAsignacion(nombre);
+    const peq = pesosEq[baseName];
+    if(peq!=null) resultados[nombre] = ((meq*peq/1000.0)*vol).toFixed(2)+" g";
+    else { mensajeError = `Error: sin peso equivalente para ${baseName}`; return; }
+  }
+
+  if(Object.keys(resultados).length===0){ mensajeError="No se pudo calcular con los fertilizantes seleccionados"; return; }
+
+  resultadosFertilizantes = resultados;
+  const noCubiertos = {};
+  if(caRestante>0.1) noCubiertos["Ca²⁺ sin cubrir"]=caRestante;
+  if(kRestante>0.1) noCubiertos["K⁺ sin cubrir"]=kRestante;
+  if(mgRestante>0.1) noCubiertos["Mg²⁺ sin cubrir"]=mgRestante;
+  if(nh4Restante>0.1) noCubiertos["NH₄⁺ sin cubrir"]=nh4Restante;
+  if(no3Restante>0.1) noCubiertos["NO₃⁻ sin cubrir"]=no3Restante;
+  if(h2po4Restante>0.1) noCubiertos["H₂PO₄⁻ sin cubrir"]=h2po4Restante;
+  if(so4Restante>0.1) noCubiertos["SO₄²⁻ sin cubrir"]=so4Restante;
+  resultadosNutrientesAportados = noCubiertos;
+}
+
+function calcularMicroelementos(){
+  const resultados = {};
+  const volumenL = num(state.volumen)||1000;
+  if(volumenL<=0){ mensajeError="El volumen debe ser mayor a 0"; return; }
+  const sel = fertilizantesSeleccionados;
+
+  const fe = state.feDeseado===''? null : num(state.feDeseado);
+  if(fe!=null && fe>0 && sel["Quelato de hierro"]){
+    const pct = state.fePorcentaje===''? null : num(state.fePorcentaje);
+    if(pct==null || pct<=0){ mensajeError="Para quelato de hierro, ingresa el % de Fe"; return; }
+    resultados[`Quelato de hierro (${pct}% Fe)`] = ((fe*(100.0/pct)*volumenL)/1000.0).toFixed(3)+" g";
+  }
+  if(fe!=null && fe>0 && sel["Sulfato ferroso"])
+    resultados["Sulfato ferroso (FeSO₄·7H₂O)"] = ((fe*(278.01/55.845)*volumenL)/1000.0).toFixed(3)+" g";
+  const cu = state.cuDeseado===''? null : num(state.cuDeseado);
+  if(cu!=null && cu>0 && sel["Sulfato de cobre"])
+    resultados["Sulfato de cobre (CuSO₄·5H₂O)"] = ((cu*(249.68/63.546)*volumenL)/1000.0).toFixed(3)+" g";
+  const zn = state.znDeseado===''? null : num(state.znDeseado);
+  if(zn!=null && zn>0 && sel["Sulfato de zinc"])
+    resultados["Sulfato de zinc (ZnSO₄·7H₂O)"] = ((zn*(287.54/65.38)*volumenL)/1000.0).toFixed(3)+" g";
+  const mn = state.mnDeseado===''? null : num(state.mnDeseado);
+  if(mn!=null && mn>0 && sel["Sulfato de manganeso"])
+    resultados["Sulfato de manganeso (MnSO₄·H₂O)"] = ((mn*(169.02/54.938)*volumenL)/1000.0).toFixed(3)+" g";
+  const b = state.bDeseado===''? null : num(state.bDeseado);
+  if(b!=null && b>0 && sel["Ácido bórico"])
+    resultados["Ácido bórico (H₃BO₃)"] = ((b*(61.83/10.811)*volumenL)/1000.0).toFixed(3)+" g";
+  const mo = state.moDeseado===''? null : num(state.moDeseado);
+  if(mo!=null && mo>0 && sel["Molibdato"])
+    resultados["Molibdato amónico"] = ((mo*(1235.86/671.72)*volumenL)/1000.0).toFixed(3)+" g";
+
+  if(Object.keys(resultados).length===0){ mensajeError="Selecciona al menos un fertilizante e ingresa valores"; return; }
+  resultadosFertilizantes = resultados; resultadosNutrientesAportados = {};
+}
+
+function calcularNeutralizacion(){
+  mensajeError = null; resultadosFertilizantes = {}; state.resultadoNeutralizacion='';
+  const volumenL = num(state.volumen);
+  if(volumenL<=0){ mensajeError="Ingrese un volumen válido"; return; }
+  const meqANeutralizar = Math.max(0, num(state.bicarbonatos)-0.5)*volumenL;
+  if(meqANeutralizar<=0){ state.resultadoNeutralizacion="No se requiere neutralización (bicarbonatos ≤ 0.5 meq/L)"; return; }
+  const densidad = num(state.densidadAcido), pureza = num(state.purezaAcido)/100.0;
+  if(densidad<=0 || pureza<=0){ mensajeError="Ingrese densidad y pureza válidas"; return; }
+  const pesos = {"Nítrico":63.01,"Fosfórico":98.00,"Sulfúrico":49.04};
+  const pesoEq = pesos[state.tipoAcido];
+  if(!pesoEq){ mensajeError="Tipo de ácido no válido"; return; }
+  const mLComercial = (meqANeutralizar*pesoEq/1000.0)/pureza/densidad;
+  const dosisTexto = mLComercial>=1000 ? (mLComercial/1000).toFixed(2)+" L" : Math.round(mLComercial)+" mL";
+  state.resultadoNeutralizacion = `Agregar ${dosisTexto} de ácido ${state.tipoAcido}`;
+  resultadosFertilizantes = {[`Ácido ${state.tipoAcido}`]: dosisTexto};
+}
+
+function nombreDescriptivoIon(simbolo){
+  const map={"Ca²⁺":"Calcio (Ca)","K⁺":"Potasio (K₂O)","Mg²⁺":"Magnesio (Mg)","NH₄⁺":"Amonio (NH₄⁺)",
+    "NO₃⁻":"Nitrato (NO₃⁻)","H₂PO₄⁻":"Fosfato (H₂PO₄⁻)","SO₄²⁻":"Sulfato (SO₄²⁻)"};
+  return map[simbolo] || simbolo;
+}
+
+function construirItemConocido(){
+  const cantidad = num(state.cantidadInversa);
+  if(cantidad<=0){ mensajeError="Ingresá la cantidad de fertilizante usada"; return null; }
+  const fert = fertilizantesConocidosComposicion.find(f=>f.nombre===state.fertilizanteInversoSeleccionado);
+  if(!fert){ mensajeError="Seleccioná un fertilizante"; return null; }
+  const comp = fert.composicion;
+  const ionesSal = ionesPorSalConocida[fert.nombre];
+  const mg = {};
+
+  if(comp.N!=null){
+    const fraccion = comp.N;
+    if(fert.nombre==="Urea") mg["Nitrógeno ureico (N)"] = fraccion*cantidad*1000.0;
+    else if(fert.nombre==="Nitrato de Amonio" || fert.nombre==="Fosfonitrato"){
+      mg["Nitrato (NO₃⁻)"] = (fraccion/2.0)*cantidad*1000.0*4.427;
+      mg["Amonio (NH₄⁺)"] = (fraccion/2.0)*cantidad*1000.0*1.288;
+    } else if(ionesSal && (ionesSal[0]==="NH₄⁺" || ionesSal[1]==="NH₄⁺")) mg["Amonio (NH₄⁺)"] = fraccion*cantidad*1000.0*1.288;
+    else mg["Nitrato (NO₃⁻)"] = fraccion*cantidad*1000.0*4.427;
+  }
+  if(comp.P2O5!=null) mg["Fosfato (H₂PO₄⁻)"] = comp.P2O5*cantidad*1000.0*1.3665;
+  if(comp.K2O!=null) mg["Potasio (K₂O)"] = comp.K2O*cantidad*1000.0;
+  if(comp.Ca!=null) mg["Calcio (Ca)"] = comp.Ca*cantidad*1000.0;
+  if(comp.Mg!=null) mg["Magnesio (Mg)"] = comp.Mg*cantidad*1000.0;
+  if(comp.SO4!=null) mg["Sulfato (SO₄²⁻)"] = comp.SO4*cantidad*1000.0*2.996;
+  if(comp.Fe!=null) mg["Hierro (Fe)"] = comp.Fe*cantidad*1000.0;
+  if(comp.Cu!=null) mg["Cobre (Cu)"] = comp.Cu*cantidad*1000.0;
+  if(comp.Zn!=null) mg["Zinc (Zn)"] = comp.Zn*cantidad*1000.0;
+  if(comp.Mn!=null) mg["Manganeso (Mn)"] = comp.Mn*cantidad*1000.0;
+  if(comp.B!=null) mg["Boro (B)"] = comp.B*cantidad*1000.0;
+  if(comp.Mo!=null) mg["Molibdeno (Mo)"] = comp.Mo*cantidad*1000.0;
+
+  const meq = {};
+  const pesoEqSal = pesosEquivalentesSalConocida[fert.nombre];
+  if(pesoEqSal!=null){
+    const meqTotal = cantidad*1000.0/pesoEqSal;
+    const iones = ionesPorSalConocida[fert.nombre];
+    if(iones){ meq[nombreDescriptivoIon(iones[0])]=meqTotal; meq[nombreDescriptivoIon(iones[1])]=meqTotal; }
+    else meq["Equivalentes"]=meqTotal;
+  } else if(fert.nombre==="Fosfonitrato"){
+    const fraccionN = comp.N||0, fraccionP2O5 = comp.P2O5||0;
+    if(fraccionN>0){ const meqN=(fraccionN/2.0)*cantidad*1000.0/14.0; meq["Nitrato (NO₃⁻)"]=meqN; meq["Amonio (NH₄⁺)"]=meqN; }
+    if(fraccionP2O5>0) meq["Fosfato (H₂PO₄⁻)"] = fraccionP2O5*cantidad*1000.0/71.0;
+  }
+
+  return { id: nextId(), etiqueta: fert.nombre, cantidadTexto: `${cantidad.toFixed(1)} g`, mgPorNutriente: mg, meqPorIon: meq };
+}
+
+function construirItemPersonalizado(){
+  const eqN=14.0, eqP2O5=71.0, eqK2O=47.0, eqCa=20.0, eqMg=12.15, eqS=16.03;
+  const cantidad = num(state.cantidadInversa);
+  if(cantidad<=0){ mensajeError="Ingresá la cantidad de producto usada"; return null; }
+  const esLiquido = state.inversoEsLiquido;
+  const densidad = esLiquido ? num(state.inversoDensidad) : 1.0;
+  if(esLiquido && densidad<=0){ mensajeError="Ingresá una densidad válida (g/mL)"; return null; }
+  const masaProducto = esLiquido ? cantidad*densidad : cantidad;
+
+  const pctN=num(state.inversoPctN);
+  const pctNO3deN = state.inversoPctNO3deN===''? null : num(state.inversoPctNO3deN);
+  const pctP2O5=num(state.inversoPctP2O5), pctK2O=num(state.inversoPctK2O), pctCa=num(state.inversoPctCa),
+        pctMg=num(state.inversoPctMg), pctS=num(state.inversoPctS), pctFe=num(state.inversoPctFe),
+        pctMn=num(state.inversoPctMn), pctZn=num(state.inversoPctZn), pctCu=num(state.inversoPctCu),
+        pctB=num(state.inversoPctB), pctMo=num(state.inversoPctMo);
+
+  if(pctN<=0 && pctP2O5<=0 && pctK2O<=0 && pctCa<=0 && pctMg<=0 && pctS<=0 &&
+     pctFe<=0 && pctMn<=0 && pctZn<=0 && pctCu<=0 && pctB<=0 && pctMo<=0){
+    mensajeError="Ingresá al menos un nutriente de la composición"; return null;
+  }
+
+  const mg={}, meq={};
+  function agregar(nombre, fraccion, pesoEq, factorIon=1.0){
+    if(fraccion<=0.0) return;
+    const mgBase = fraccion*masaProducto*1000.0;
+    mg[nombre]=mgBase*factorIon; meq[nombre]=mgBase/pesoEq;
+  }
+  function agregarSoloPpm(nombre, fraccion){ if(fraccion<=0.0) return; mg[nombre]=fraccion*masaProducto*1000.0; }
+
+  if(pctN>0){
+    const pctNO3Efectivo = pctNO3deN!=null ? Math.min(100, Math.max(0,pctNO3deN)) : 100.0;
+    agregar("Nitrato (NO₃⁻)", (pctN/100.0)*(pctNO3Efectivo/100.0), eqN, 4.427);
+    agregar("Amonio (NH₄⁺)", (pctN/100.0)*(1-pctNO3Efectivo/100.0), eqN, 1.288);
+  }
+  agregar("Fosfato (H₂PO₄⁻)", pctP2O5/100.0, eqP2O5, 1.3665);
+  agregar("Potasio (K₂O)", pctK2O/100.0, eqK2O);
+  agregar("Calcio (Ca)", pctCa/100.0, eqCa);
+  agregar("Magnesio (Mg)", pctMg/100.0, eqMg);
+  agregar("Sulfato (SO₄²⁻)", pctS/100.0, eqS, 2.996);
+  agregarSoloPpm("Hierro (Fe)", pctFe/100.0);
+  agregarSoloPpm("Manganeso (Mn)", pctMn/100.0);
+  agregarSoloPpm("Zinc (Zn)", pctZn/100.0);
+  agregarSoloPpm("Cobre (Cu)", pctCu/100.0);
+  agregarSoloPpm("Boro (B)", pctB/100.0);
+  agregarSoloPpm("Molibdeno (Mo)", pctMo/100.0);
+
+  if(Object.keys(mg).length===0){ mensajeError="No se pudo calcular, revisá los datos ingresados"; return null; }
+
+  const nombre = state.inversoNombrePersonalizado.trim() || (esLiquido ? "Fertilizante personalizado (líquido)" : "Fertilizante personalizado (sólido)");
+  return {
+    id: nextId(), etiqueta: nombre,
+    cantidadTexto: esLiquido ? `${cantidad.toFixed(1)} mL` : `${cantidad.toFixed(1)} g`,
+    mgPorNutriente: mg, meqPorIon: meq
+  };
+}
+
+function construirItemAcido(){
+  const cantidadML = num(state.cantidadInversa);
+  if(cantidadML<=0){ mensajeError="Ingresá los mL de ácido usados"; return null; }
+  const densidad = num(state.inversoDensidadAcido), pureza = num(state.inversoPurezaAcido)/100.0;
+  if(densidad<=0 || pureza<=0){ mensajeError="Ingresá densidad y pureza válidas del ácido"; return null; }
+  const pesos = {"Nítrico":63.01,"Fosfórico":98.00,"Sulfúrico":49.04};
+  const pesoEqAcido = pesos[state.inversoTipoAcido];
+  if(!pesoEqAcido){ mensajeError="Tipo de ácido no válido"; return null; }
+  const ion = state.inversoTipoAcido==="Nítrico" ? "NO₃⁻" : (state.inversoTipoAcido==="Fosfórico" ? "H₂PO₄⁻" : "SO₄²⁻");
+  const masaPuraG = cantidadML*densidad*pureza;
+  const meqTotal = masaPuraG*1000.0/pesoEqAcido;
+  return { id: nextId(), etiqueta: `Ácido ${state.inversoTipoAcido}`, cantidadTexto: `${cantidadML.toFixed(1)} mL`, mgPorNutriente:{}, meqPorIon:{[ion]:meqTotal} };
+}
+
+function agregarItemInverso(){
+  mensajeError = null;
+  let item;
+  if(state.inversoTipoItem==="CONOCIDO") item = construirItemConocido();
+  else if(state.inversoTipoItem==="PERSONALIZADO") item = construirItemPersonalizado();
+  else item = construirItemAcido();
+  if(!item) return false;
+  state.itemsInverso.push(item);
+  state.cantidadInversa=''; state.inversoDensidad=''; state.inversoNombrePersonalizado='';
+  state.inversoPctN=''; state.inversoPctNO3deN=''; state.inversoPctP2O5='';
+  state.inversoPctK2O=''; state.inversoPctCa=''; state.inversoPctMg=''; state.inversoPctS='';
+  state.inversoPctFe=''; state.inversoPctMn=''; state.inversoPctZn=''; state.inversoPctCu=''; state.inversoPctB=''; state.inversoPctMo='';
+  state.inversoDensidadAcido=''; state.inversoPurezaAcido='';
+  resultadosFertilizantes = {}; resultadosNutrientesAportados = {};
+  return true;
+}
+function quitarItemInverso(id){ state.itemsInverso = state.itemsInverso.filter(it=>it.id!==id); resultadosFertilizantes={}; resultadosNutrientesAportados={}; }
+function vaciarRecetaInverso(){ state.itemsInverso=[]; resultadosFertilizantes={}; resultadosNutrientesAportados={}; mensajeError=null; }
+
+function calcularInverso(){
+  mensajeError=null; resultadosFertilizantes={}; resultadosNutrientesAportados={};
+  const volumenL = num(state.volumenInverso);
+  if(volumenL<=0){ mensajeError="Ingresá un volumen de agua válido"; return; }
+  if(state.itemsInverso.length===0){ mensajeError="Agregá al menos un fertilizante o ácido a la receta"; return; }
+  const mgTotal={}, meqTotal={};
+  state.itemsInverso.forEach(item=>{
+    Object.entries(item.mgPorNutriente).forEach(([k,v])=>{ mgTotal[k]=(mgTotal[k]||0)+v; });
+    Object.entries(item.meqPorIon).forEach(([k,v])=>{ meqTotal[k]=(meqTotal[k]||0)+v; });
+  });
+  const receta = {};
+  state.itemsInverso.forEach((item,idx)=>{ receta[`🧾 ${idx+1}. ${item.etiqueta}`] = item.cantidadTexto; });
+  Object.entries(mgTotal).forEach(([nombre,mg])=>{ receta[nombre] = `${(mg/volumenL).toFixed(1)} ppm`; });
+  resultadosFertilizantes = receta;
+  const meqPorL = {};
+  Object.entries(meqTotal).forEach(([k,v])=>{ meqPorL[k]=v/volumenL; });
+  resultadosNutrientesAportados = meqPorL;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER / UI
+// ═══════════════════════════════════════════════════════════════════
+
+function renderResultados(){
+  const el = document.getElementById('resultados');
+  if(mensajeError){ el.innerHTML = `<div class="result-error">⚠️ ${escapeHtml(mensajeError)}</div>`; return; }
+  if(state.tipoSeleccionado==='NEUTRALIZACION'){
+    el.innerHTML = state.resultadoNeutralizacion
+      ? `<div class="result-card"><div class="result-row"><span>${escapeHtml(state.resultadoNeutralizacion)}</span></div></div>` : '';
+    return;
+  }
+  const hasPrincipal = Object.keys(resultadosFertilizantes).length>0;
+  const hasSecundario = Object.keys(resultadosNutrientesAportados).length>0;
+  if(!hasPrincipal && !hasSecundario){ el.innerHTML=''; return; }
+
+  const esInverso = state.tipoSeleccionado==='INVERSO';
+  const tituloPrincipal = esInverso ? 'Concentración aportada' : 'Dosis calculadas';
+  const tituloSecundario = esInverso ? 'Equivalentes (meq/L)' : 'Nutrientes cubiertos';
+
+  let html = '<div class="result-card">';
+  if(hasPrincipal){
+    html += `<div class="result-header">${tituloPrincipal}</div>`;
+    Object.entries(resultadosFertilizantes).forEach(([k,v])=>{
+      html += `<div class="result-row"><span>${escapeHtml(k)}</span><b>${escapeHtml(String(v))}</b></div>`;
+    });
+  }
+  if(hasSecundario){
+    html += `<div class="result-header alt">${tituloSecundario}</div>`;
+    Object.entries(resultadosNutrientesAportados).forEach(([k,v])=>{
+      html += `<div class="result-row"><span>${escapeHtml(k)}</span><b>${Number(v).toFixed(2)}</b></div>`;
+    });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderFertilizantes(){
+  const wrap = document.getElementById('fert-panel');
+  const metodosConSelector = ['UNIDADES','PPM','MEQ','MICROELEMENTOS'];
+  if(!metodosConSelector.includes(state.tipoSeleccionado)){ wrap.innerHTML=''; wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const lista = state.tipoSeleccionado==='MICROELEMENTOS' ? nombresFertilizantesMicro : nombresFertilizantesMacro;
+  wrap.innerHTML = `<div class="section-label">Fertilizantes disponibles</div><div class="fert-list">` +
+    lista.map(nombre=>{
+      const checked = fertilizantesSeleccionados[nombre] ? 'checked' : '';
+      return `<label class="fert-row"><span>${escapeHtml(nombre)}</span><input type="checkbox" data-fert="${escapeHtml(nombre)}" ${checked}></label>`;
+    }).join('') + `</div>`;
+  wrap.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', e=>{ fertilizantesSeleccionados[e.target.dataset.fert] = e.target.checked; });
+  });
+}
+
+function syncVolumeInputs(){ document.querySelectorAll('.vol-input').forEach(el=>{ el.value = state.volumen; }); }
+
+function renderInversoSub(){
+  const wrap = document.getElementById('inverso-subform');
+  document.querySelectorAll('#inversoTipo-chips .chip').forEach(b=>b.classList.toggle('active', b.dataset.tipo===state.inversoTipoItem));
+
+  if(state.inversoTipoItem==='CONOCIDO'){
+    wrap.innerHTML = `
+      <div class="section-label">Fertilizante</div>
+      <div class="field-grid"><label>Producto
+        <select id="fertilizanteInversoSeleccionado">
+          ${fertilizantesConocidosComposicion.map(f=>`<option value="${escapeHtml(f.nombre)}" ${f.nombre===state.fertilizanteInversoSeleccionado?'selected':''}>${escapeHtml(f.nombre)}</option>`).join('')}
+        </select>
+      </label></div>
+      <div class="section-label">Cantidad de este fertilizante</div>
+      <div class="field-grid"><label>Cantidad usada (g)<input id="cantidadInversa" type="number" step="any" value="${escapeHtml(state.cantidadInversa)}"></label></div>
+    `;
+    document.getElementById('fertilizanteInversoSeleccionado').addEventListener('change', e=>{ state.fertilizanteInversoSeleccionado = e.target.value; });
+    document.getElementById('cantidadInversa').addEventListener('input', e=>{ state.cantidadInversa = e.target.value; });
+
+  } else if(state.inversoTipoItem==='PERSONALIZADO'){
+    wrap.innerHTML = `
+      <div class="section-label">Nombre (opcional)</div>
+      <div class="field-grid"><label>Nombre del producto<input id="inversoNombrePersonalizado" type="text" value="${escapeHtml(state.inversoNombrePersonalizado)}"></label></div>
+      <div class="section-label">Estado físico</div>
+      <div class="chip-row" id="inversoLiquido-chips">
+        <button type="button" class="chip ${!state.inversoEsLiquido?'active':''}" data-liquido="false">Sólido</button>
+        <button type="button" class="chip ${state.inversoEsLiquido?'active':''}" data-liquido="true">Líquido</button>
+      </div>
+      <div id="inverso-densidad-wrap" style="display:${state.inversoEsLiquido?'block':'none'}">
+        <div class="section-label">Densidad del producto</div>
+        <div class="field-grid"><label>Densidad (g/mL)<input id="inversoDensidad" type="number" step="any" value="${escapeHtml(state.inversoDensidad)}"></label></div>
+      </div>
+      <div class="section-label">Composición declarada (% en peso)</div>
+      <div class="field-grid">
+        <label>Nitrógeno total (N)<input id="inversoPctN" type="number" step="any" value="${escapeHtml(state.inversoPctN)}"></label>
+        <label>% de N como NO₃⁻ (vacío = 100%)<input id="inversoPctNO3deN" type="number" step="any" value="${escapeHtml(state.inversoPctNO3deN)}"></label>
+        <label>Fósforo (P₂O₅)<input id="inversoPctP2O5" type="number" step="any" value="${escapeHtml(state.inversoPctP2O5)}"></label>
+        <label>Potasio (K₂O)<input id="inversoPctK2O" type="number" step="any" value="${escapeHtml(state.inversoPctK2O)}"></label>
+        <label>Calcio (Ca)<input id="inversoPctCa" type="number" step="any" value="${escapeHtml(state.inversoPctCa)}"></label>
+        <label>Magnesio (Mg)<input id="inversoPctMg" type="number" step="any" value="${escapeHtml(state.inversoPctMg)}"></label>
+        <label>Azufre (S)<input id="inversoPctS" type="number" step="any" value="${escapeHtml(state.inversoPctS)}"></label>
+      </div>
+      <p class="hint">Dejá el % de N como NO₃⁻ vacío si el fertilizante solo tiene una forma de N (ej. urea). El % restante se asume NH₄⁺.</p>
+      <div class="section-label">Microelementos (opcional, % en peso)</div>
+      <div class="field-grid">
+        <label>Hierro (Fe)<input id="inversoPctFe" type="number" step="any" value="${escapeHtml(state.inversoPctFe)}"></label>
+        <label>Manganeso (Mn)<input id="inversoPctMn" type="number" step="any" value="${escapeHtml(state.inversoPctMn)}"></label>
+        <label>Zinc (Zn)<input id="inversoPctZn" type="number" step="any" value="${escapeHtml(state.inversoPctZn)}"></label>
+        <label>Cobre (Cu)<input id="inversoPctCu" type="number" step="any" value="${escapeHtml(state.inversoPctCu)}"></label>
+        <label>Boro (B)<input id="inversoPctB" type="number" step="any" value="${escapeHtml(state.inversoPctB)}"></label>
+        <label>Molibdeno (Mo)<input id="inversoPctMo" type="number" step="any" value="${escapeHtml(state.inversoPctMo)}"></label>
+      </div>
+      <div class="section-label">Cantidad usada</div>
+      <div class="field-grid"><label>Cantidad usada (${state.inversoEsLiquido?'mL':'g'})<input id="cantidadInversa" type="number" step="any" value="${escapeHtml(state.cantidadInversa)}"></label></div>
+    `;
+    ['inversoNombrePersonalizado','inversoPctN','inversoPctNO3deN','inversoPctP2O5','inversoPctK2O','inversoPctCa',
+     'inversoPctMg','inversoPctS','inversoPctFe','inversoPctMn','inversoPctZn','inversoPctCu','inversoPctB','inversoPctMo',
+     'cantidadInversa','inversoDensidad'].forEach(key=>{
+      const el = document.getElementById(key);
+      if(el) el.addEventListener('input', ()=>{ state[key]=el.value; });
+    });
+    document.querySelectorAll('#inversoLiquido-chips .chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ state.inversoEsLiquido = btn.dataset.liquido==='true'; renderInversoSub(); });
+    });
+
+  } else { // ACIDO
+    wrap.innerHTML = `
+      <div class="section-label">Tipo de ácido</div>
+      <div class="chip-row" id="inversoAcido-chips">
+        <button type="button" class="chip ${state.inversoTipoAcido==='Nítrico'?'active':''}" data-acido="Nítrico">Nítrico</button>
+        <button type="button" class="chip ${state.inversoTipoAcido==='Fosfórico'?'active':''}" data-acido="Fosfórico">Fosfórico</button>
+        <button type="button" class="chip ${state.inversoTipoAcido==='Sulfúrico'?'active':''}" data-acido="Sulfúrico">Sulfúrico</button>
+      </div>
+      <div class="section-label">Producto comercial</div>
+      <div class="field-grid">
+        <label>Densidad (g/mL)<input id="inversoDensidadAcido" type="number" step="any" value="${escapeHtml(state.inversoDensidadAcido)}"></label>
+        <label>Pureza (%)<input id="inversoPurezaAcido" type="number" step="any" value="${escapeHtml(state.inversoPurezaAcido)}"></label>
+      </div>
+      <div class="section-label">Cantidad usada</div>
+      <div class="field-grid"><label>mL usados<input id="cantidadInversa" type="number" step="any" value="${escapeHtml(state.cantidadInversa)}"></label></div>
+    `;
+    ['inversoDensidadAcido','inversoPurezaAcido','cantidadInversa'].forEach(key=>{
+      const el = document.getElementById(key);
+      if(el) el.addEventListener('input', ()=>{ state[key]=el.value; });
+    });
+    document.querySelectorAll('#inversoAcido-chips .chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.inversoTipoAcido = btn.dataset.acido;
+        document.querySelectorAll('#inversoAcido-chips .chip').forEach(b=>b.classList.toggle('active', b===btn));
+      });
+    });
+  }
+}
+
+function renderInversoItems(){
+  const el = document.getElementById('inverso-items');
+  const btnCalc = document.getElementById('btn-calc-inverso');
+  if(state.itemsInverso.length===0){ el.innerHTML=''; btnCalc.textContent='Calcular receta'; return; }
+  btnCalc.textContent = `Calcular receta (${state.itemsInverso.length} productos)`;
+  el.innerHTML = `<div class="section-label">Productos en la receta (${state.itemsInverso.length}) <span class="link-danger" id="btn-vaciar-inverso">Vaciar</span></div>` +
+    `<div class="items-card">` +
+    state.itemsInverso.map(item=>`
+      <div class="item-row">
+        <div><b>${escapeHtml(item.etiqueta)}</b><div class="item-sub">${escapeHtml(item.cantidadTexto)}</div></div>
+        <span class="item-remove" data-id="${item.id}">✕</span>
+      </div>`).join('') + `</div>`;
+  document.getElementById('btn-vaciar-inverso').addEventListener('click', ()=>{ vaciarRecetaInverso(); renderInversoItems(); renderResultados(); });
+  el.querySelectorAll('.item-remove').forEach(span=>{
+    span.addEventListener('click', ()=>{ quitarItemInverso(Number(span.dataset.id)); renderInversoItems(); renderResultados(); });
+  });
+}
+
+function seleccionarMetodo(tipo){
+  state.tipoSeleccionado = tipo;
+  mensajeError = null; resultadosFertilizantes={}; resultadosNutrientesAportados={};
+  document.querySelectorAll('.method-btn').forEach(b=>b.classList.toggle('active', b.dataset.method===tipo));
+  document.querySelectorAll('.method-panel').forEach(p=>p.style.display = (p.dataset.method===tipo?'block':'none'));
+  document.getElementById('main-calc-btn').style.display = ['UNIDADES','PPM','CE','MEQ','MICROELEMENTOS'].includes(tipo) ? 'block':'none';
+  renderFertilizantes();
+  renderResultados();
+  if(tipo==='INVERSO'){ renderInversoSub(); renderInversoItems(); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+
+document.querySelectorAll('.method-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>seleccionarMetodo(btn.dataset.method));
+});
+
+const simpleFields = ['nRequerido','pRequerido','kRequerido','caRequerido','mgRequerido','sRequerido',
+  'caPpmRequerido','kPpmRequerido','mgPpmRequerido','pPpmRequerido','sPpmRequerido','nitratosRequerido','amonioRequerido',
+  'calcioRequerido','potasioRequerido','magnesioRequerido','amonioMeqRequerido','nitratoMeqRequerido','fosfatoRequerido','sulfatoRequerido',
+  'feDeseado','fePorcentaje','mnDeseado','znDeseado','cuDeseado','bDeseado','moDeseado',
+  'bicarbonatos','densidadAcido','purezaAcido','volumenInverso'];
+simpleFields.forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){ el.value = state[id]; el.addEventListener('input', ()=>{ state[id]=el.value; }); }
+});
+
+document.querySelectorAll('.vol-input').forEach(el=>{
+  el.value = state.volumen;
+  el.addEventListener('input', ()=>{ state.volumen = el.value; syncVolumeInputs(); });
+});
+
+document.getElementById('ceRequerida').addEventListener('change', e=>{ state.ceRequerida = e.target.value; });
+
+document.querySelectorAll('#tipoAcido-chips .chip').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.tipoAcido = btn.dataset.acido;
+    document.querySelectorAll('#tipoAcido-chips .chip').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+});
+document.getElementById('btn-calc-neutralizacion').addEventListener('click', ()=>{ calcularNeutralizacion(); renderResultados(); });
+
+document.querySelectorAll('#inversoTipo-chips .chip').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ state.inversoTipoItem = btn.dataset.tipo; mensajeError=null; renderInversoSub(); });
+});
+document.getElementById('btn-agregar-inverso').addEventListener('click', ()=>{
+  agregarItemInverso(); renderInversoSub(); renderInversoItems(); renderResultados();
+});
+document.getElementById('btn-calc-inverso').addEventListener('click', ()=>{ calcularInverso(); renderResultados(); });
+
+document.getElementById('main-calc-btn').addEventListener('click', ()=>{
+  mensajeError=null; resultadosFertilizantes={}; resultadosNutrientesAportados={};
+  switch(state.tipoSeleccionado){
+    case 'UNIDADES': calcularUnidades(); break;
+    case 'PPM': calcularPPM(); break;
+    case 'CE': calcularCE(); break;
+    case 'MEQ': calcularMEQ(); break;
+    case 'MICROELEMENTOS': calcularMicroelementos(); break;
+  }
+  renderResultados();
+});
+
+seleccionarMetodo('UNIDADES');
+
+})();
+</script>
 
 </body>
 </html>
