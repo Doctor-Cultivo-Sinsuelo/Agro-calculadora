@@ -132,6 +132,7 @@
     <button type="button" class="method-btn" data-method="MICROELEMENTOS"><b>Micro</b>Fe · Mn · Zn</button>
     <button type="button" class="method-btn" data-method="NEUTRALIZACION"><b>pH</b>Neutralización</button>
     <button type="button" class="method-btn" data-method="INVERSO"><b>Conversión</b>g/mL → meq/L</button>
+    <button type="button" class="method-btn" data-method="DILUCION"><b>Dilución</b>C₁V₁ = C₂V₂</button>
   </div>
 
   <div class="panel-card">
@@ -248,6 +249,24 @@
       <button type="button" class="btn-calc" id="btn-calc-inverso">Calcular receta</button>
     </div>
 
+    <div class="method-panel" data-method="DILUCION" style="display:none">
+      <div class="section-label">¿Qué estás diluyendo? (opcional)</div>
+      <div class="field-grid"><label>Producto o solución madre<input id="nombreSolutoDilucion" type="text" placeholder="Ej: Citocininas"></label></div>
+      <div class="section-label">Tu envase / producto concentrado</div>
+      <div class="field-grid">
+        <label>Cantidad total en el envase<input id="cantidadTotalDilucion" type="number" step="any"></label>
+        <label>Volumen de ese envase (L)<input id="volumenInicialDilucion" type="number" step="any"></label>
+      </div>
+      <p class="hint">Ej: si tu envase tiene 1381 meq de calcio en 3.4 L, pon 1381 y 3.4. No calcules la concentración por litro, la calculadora lo hace.</p>
+      <div class="section-label">Lo que quieres lograr</div>
+      <div class="field-grid">
+        <label>Concentración deseada<input id="concFinalDilucion" type="number" step="any"></label>
+        <label>Unidad<select id="unidadDilucion"><option>ppm</option><option>%</option><option>mL/L</option><option>g/L</option><option>meq/L</option></select></label>
+        <label>Volumen final (L)<input id="volumenFinalDilucion" type="number" step="any"></label>
+      </div>
+      <button type="button" class="btn-calc" id="btn-calc-dilucion">Calcular dilución</button>
+    </div>
+
     <div id="fert-panel" style="display:none;margin-top:8px;"></div>
 
     <button type="button" class="btn-calc" id="main-calc-btn">Calcular receta</button>
@@ -343,6 +362,12 @@
       <p>Convierte una receta completa (uno o varios fertilizantes, y hasta ácidos) en el aporte real de ppm y meq/L a la solución. Sirve para revisar o comparar una receta ya armada.</p>
       <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen total de agua de la receta<br>2. Elegí el tipo de producto: "Conocido" (de la lista), "Personalizado" (uno propio) o "Ácido"<br>3. Completá los datos de ese producto y presioná "Agregar a la receta"<br>4. Repetí por cada fertilizante o ácido que uses en la misma mezcla<br>5. Presioná "Calcular receta": suma el aporte de todos los productos<br>6. Exportá el resultado a PDF con "Exportar plan de aplicación"</p>
       <p class="tip">💡 Para líquidos se usa: %/100 × densidad × cantidad = gramos de nutriente.<br>💡 Con un fertilizante conocido, el meq/L se calcula con el peso equivalente de la sal completa (relación 1:1 catión/anión).<br>💡 Microelementos siempre en ppm, nunca en meq/L, porque en fertirriego no se balancean por equivalentes.</p>
+      <hr>
+
+      <h3>💧 Método 8: Disolución (C₁V₁ = C₂V₂)</h3>
+      <p>Sirve para diluir productos concentrados (hormonas como citocininas, AIB, ANA; fertilizantes líquidos; soluciones stock) a una concentración final de trabajo.</p>
+      <p><b>¿Cómo usarlo?</b><br>1. (Opcional) Escribe el nombre de lo que diluyes<br>2. Ingresa la cantidad TOTAL disuelta en tu envase (ej. 1381 meq)<br>3. Ingresa el volumen de ese envase (ej. 3.4 L)<br>4. Ingresa la concentración que quieres lograr y su unidad<br>5. Ingresa el volumen final a preparar<br>6. Presiona "Calcular dilución"</p>
+      <p class="tip">💡 Ej: 1381 meq en 3.4 L, quieres 6 meq/L en 1 L → tomas ≈14.8 mL y completas hasta 1 L.</p>
       <hr>
 
       <h3>📋 Composición de fertilizantes</h3>
@@ -447,7 +472,9 @@ const state = {
   inversoPctMg:'', inversoPctS:'', inversoPctFe:'', inversoPctMn:'', inversoPctZn:'',
   inversoPctCu:'', inversoPctB:'', inversoPctMo:'',
   inversoTipoAcido:'Nítrico', inversoDensidadAcido:'', inversoPurezaAcido:'',
-  cantidadInversa:'', itemsInverso:[]
+  cantidadInversa:'', itemsInverso:[],
+  nombreSolutoDilucion:'', cantidadTotalDilucion:'', volumenInicialDilucion:'',
+  concFinalDilucion:'', volumenFinalDilucion:'1', unidadDilucion:'ppm', resultadoDilucion:''
 };
 
 const fertilizantesSeleccionados = {};
@@ -474,12 +501,17 @@ const recetaInfo = { productor:'', cultivo:'', rancho:'', area:'', tipoAplicacio
 const recetaAcumulada = {};
 
 function volumenParaMetodo(tipo){
+  if(tipo==='DILUCION') return num(state.volumenFinalDilucion);
   return ['PPM','MEQ','CE','MICROELEMENTOS','NEUTRALIZACION'].includes(tipo) ? num(state.volumen) : null;
 }
 function unidadActual(tipo){
-  return {UNIDADES:'kg/ha', PPM:'mg/L', MEQ:'meq/L', MICROELEMENTOS:'mg/L', CE:'dS/m', NEUTRALIZACION:'mL', INVERSO:'meq/L'}[tipo];
+  return {UNIDADES:'kg/ha', PPM:'mg/L', MEQ:'meq/L', MICROELEMENTOS:'mg/L', CE:'dS/m', NEUTRALIZACION:'mL', INVERSO:'meq/L', DILUCION:'mL'}[tipo];
 }
 function nombreMetodo(tipo){
+  if(tipo==='DILUCION'){
+    const n = state.nombreSolutoDilucion.trim();
+    return n ? 'Disolución — '+n : 'Disolución (C₁V₁=C₂V₂)';
+  }
   return {UNIDADES:'Unidades (kg/ha)', PPM:'ppm', CE:'CE', MEQ:'MEQ', MICROELEMENTOS:'Microelementos',
     NEUTRALIZACION:'Neutralización de pH', INVERSO:'Conversión'}[tipo];
 }
@@ -489,7 +521,8 @@ function guardarEnRecetaAcumulada(){
       resultados: {...resultadosFertilizantes},
       aportes: {...resultadosNutrientesAportados},
       unidad: unidadActual(state.tipoSeleccionado),
-      volumenLitros: volumenParaMetodo(state.tipoSeleccionado)
+      volumenLitros: volumenParaMetodo(state.tipoSeleccionado),
+      detalle: state.tipoSeleccionado==='DILUCION' ? state.resultadoDilucion : null
     };
   }
 }
@@ -836,6 +869,26 @@ function calcularNeutralizacion(){
   resultadosFertilizantes = {[`Ácido ${state.tipoAcido}`]: dosisTexto};
 }
 
+function fmtVolDil(l){ return l<1 ? (l*1000).toFixed(1)+' mL' : l.toFixed(2)+' L'; }
+function fmtVol(l){ return (Number.isInteger(l) ? String(l) : l.toFixed(1))+' L'; }
+
+function calcularDilucion(){
+  mensajeError=null; resultadosFertilizantes={}; resultadosNutrientesAportados={}; state.resultadoDilucion='';
+  const total=num(state.cantidadTotalDilucion), volIni=num(state.volumenInicialDilucion),
+        c2=num(state.concFinalDilucion), v2=num(state.volumenFinalDilucion);
+  if(total<=0){ mensajeError="Ingresa la cantidad total que tienes en tu envase"; return; }
+  if(volIni<=0){ mensajeError="Ingresa el volumen de ese envase"; return; }
+  if(c2<=0){ mensajeError="Ingresa la concentración que quieres lograr"; return; }
+  if(v2<=0){ mensajeError="Ingresa el volumen final a preparar"; return; }
+  const v1 = (c2*v2*volIni)/total;
+  const agua = v2 - v1;
+  if(agua<0){ mensajeError="La concentración que buscas es más alta de lo que tu producto puede dar en ese volumen final. Revisa los datos."; return; }
+  const etiqueta = state.nombreSolutoDilucion.trim() || 'solución madre';
+  const aviso = v1>volIni ? `\n\n⚠️ Necesitas ${fmtVolDil(v1)} de ${etiqueta}, pero tu envase solo tiene ${fmtVolDil(volIni)}. No te alcanza.` : '';
+  state.resultadoDilucion = `Tomar ${fmtVolDil(v1)} de ${etiqueta} y completar el volumen con ${fmtVolDil(agua)} hasta llegar a ${fmtVol(v2)} a una concentración final de ${c2} ${state.unidadDilucion}.${aviso}`;
+  resultadosFertilizantes = {[`${etiqueta} — a tomar`]: fmtVolDil(v1), 'Volumen a completar': fmtVolDil(agua)};
+}
+
 function nombreDescriptivoIon(simbolo){
   const map={"Ca²⁺":"Calcio (Ca)","K⁺":"Potasio (K₂O)","Mg²⁺":"Magnesio (Mg)","NH₄⁺":"Amonio (NH₄⁺)",
     "NO₃⁻":"Nitrato (NO₃⁻)","H₂PO₄⁻":"Fosfato (H₂PO₄⁻)","SO₄²⁻":"Sulfato (SO₄²⁻)"};
@@ -1013,10 +1066,12 @@ function renderResultados(){
   if(!hasPrincipal && !hasSecundario){ el.innerHTML=''; return; }
 
   const esInverso = state.tipoSeleccionado==='INVERSO';
-  const tituloPrincipal = esInverso ? 'Concentración aportada' : 'Dosis calculadas';
+  const tituloPrincipal = esInverso ? 'Concentración aportada' : (state.tipoSeleccionado==='DILUCION' ? 'Resultado de la dilución' : 'Dosis calculadas');
   const tituloSecundario = esInverso ? 'Equivalentes (meq/L)' : 'Nutrientes cubiertos';
 
   let html = '<div class="result-card">';
+  if(state.tipoSeleccionado==='DILUCION' && state.resultadoDilucion)
+    html += `<div class="result-row" style="white-space:pre-line"><span>${escapeHtml(state.resultadoDilucion)}</span></div>`;
   if(hasPrincipal){
     html += `<div class="result-header">${tituloPrincipal}</div>`;
     Object.entries(resultadosFertilizantes).forEach(([k,v])=>{
@@ -1185,7 +1240,7 @@ const simpleFields = ['nRequerido','pRequerido','kRequerido','caRequerido','mgRe
   'caPpmRequerido','kPpmRequerido','mgPpmRequerido','pPpmRequerido','sPpmRequerido','nitratosRequerido','amonioRequerido',
   'calcioRequerido','potasioRequerido','magnesioRequerido','amonioMeqRequerido','nitratoMeqRequerido','fosfatoRequerido','sulfatoRequerido',
   'feDeseado','fePorcentaje','mnDeseado','znDeseado','cuDeseado','bDeseado','moDeseado',
-  'bicarbonatos','densidadAcido','purezaAcido','volumenInverso'];
+  'bicarbonatos','densidadAcido','purezaAcido','volumenInverso','nombreSolutoDilucion','cantidadTotalDilucion','volumenInicialDilucion','concFinalDilucion','volumenFinalDilucion','unidadDilucion'];
 simpleFields.forEach(id=>{
   const el = document.getElementById(id);
   if(el){ el.value = state[id]; el.addEventListener('input', ()=>{ state[id]=el.value; }); }
@@ -1213,6 +1268,9 @@ document.getElementById('btn-agregar-inverso').addEventListener('click', ()=>{
   agregarItemInverso(); renderInversoSub(); renderInversoItems(); renderResultados();
 });
 document.getElementById('btn-calc-inverso').addEventListener('click', ()=>{ calcularInverso(); renderResultados(); });
+document.getElementById('btn-calc-dilucion').addEventListener('click', ()=>{
+  calcularDilucion(); renderResultados(); guardarEnRecetaAcumulada(); renderRecetaAcumulada();
+});
 
 document.getElementById('main-calc-btn').addEventListener('click', ()=>{
   mensajeError=null; resultadosFertilizantes={}; resultadosNutrientesAportados={};
@@ -1251,6 +1309,39 @@ document.querySelectorAll('#tipoAplicacion-chips .chip').forEach(btn=>{
 });
 
 // ─── Generar PDF (jsPDF) ───────────────────────────────────────────────────
+// ─── Texto químico con sub/superíndices dibujados (jsPDF no trae ₂ ₃ ₄ ⁺ ⁻) ──
+const SUBS_PDF = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+const SUPS_PDF = {'⁺':'+','⁻':'-','²':'2','³':'3','⁴':'4'};
+const PT_A_MM = 0.3528;
+function partirQuimica(texto){
+  const limpio = String(texto).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu,'').trim();
+  const partes = [];
+  for(const ch of limpio){
+    const tipo = SUBS_PDF[ch] ? 'sub' : (SUPS_PDF[ch] ? 'sup' : 'normal');
+    const c = SUBS_PDF[ch] || SUPS_PDF[ch] || ch;
+    const ult = partes[partes.length-1];
+    if(ult && ult.tipo===tipo) ult.t += c; else partes.push({t:c, tipo});
+  }
+  return partes;
+}
+function textoQuimico(doc, texto, x, y, align){
+  const size = doc.getFontSize();
+  const pequeno = size*0.7;
+  const partes = partirQuimica(texto);
+  if(align==='right'){
+    let w = 0;
+    partes.forEach(p=>{ doc.setFontSize(p.tipo==='normal'?size:pequeno); w += doc.getTextWidth(p.t); });
+    x -= w;
+  }
+  partes.forEach(p=>{
+    doc.setFontSize(p.tipo==='normal'?size:pequeno);
+    const dy = p.tipo==='sub' ? size*0.2*PT_A_MM : (p.tipo==='sup' ? -size*0.35*PT_A_MM : 0);
+    doc.text(p.t, x, y+dy);
+    x += doc.getTextWidth(p.t);
+  });
+  doc.setFontSize(size);
+}
+
 function siguienteNumeroReceta(){
   let n = parseInt(localStorage.getItem('agro_contador')||'0', 10) + 1;
   try{ localStorage.setItem('agro_contador', String(n)); }catch(e){}
@@ -1301,18 +1392,41 @@ function generarPDF(){
   Object.entries(recetaAcumulada).forEach(([tipo, item])=>{
     if(y>265){ doc.addPage(); y=20; }
     let titulo = nombreMetodo(tipo);
-    if(item.volumenLitros && item.volumenLitros>0) titulo += ` — para ${item.volumenLitros} L de agua`;
+    const vol = item.volumenLitros;
+    if(vol && vol>0) titulo += ` — para ${fmtVol(vol)} ${tipo==='DILUCION' ? 'de volumen' : 'de agua'}`;
     doc.setFillColor(227,237,226); doc.rect(14, y-4.5, margenDer-14, 7, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(27,94,32);
-    doc.text(titulo, 16, y); y+=8;
+    textoQuimico(doc, titulo, 16, y); y+=8;
 
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
+    if(item.detalle){
+      const limpio = item.detalle.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu,'').replace(/\s*\n+\s*/g,' ');
+      doc.splitTextToSize(limpio, margenDer-18).forEach(l=>{
+        if(y>275){ doc.addPage(); y=20; }
+        doc.text(l, 16, y); y+=5;
+      });
+      y+=1;
+    }
     Object.entries(item.resultados).forEach(([nombre,dosis])=>{
       if(y>275){ doc.addPage(); y=20; }
-      doc.text(String(nombre), 16, y);
-      doc.text(String(dosis), margenDer, y, {align:'right'});
+      textoQuimico(doc, String(nombre), 16, y);
+      textoQuimico(doc, String(dosis), margenDer, y, 'right');
       y+=5.5;
     });
+    const aportes = Object.entries(item.aportes||{});
+    if(aportes.length){
+      if(y>270){ doc.addPage(); y=20; }
+      y+=1;
+      doc.setFont('helvetica','bold'); doc.setTextColor(27,94,32);
+      doc.text(tipo==='MEQ' ? 'Nutrientes sin cubrir' : 'Aportes nutricionales', 16, y); y+=5.5;
+      doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+      aportes.forEach(([n,v])=>{
+        if(y>275){ doc.addPage(); y=20; }
+        textoQuimico(doc, n, 16, y);
+        textoQuimico(doc, `${Number(v).toFixed(2)} ${item.unidad}`, margenDer, y, 'right');
+        y+=5.5;
+      });
+    }
     y+=3;
   });
 
