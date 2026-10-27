@@ -110,6 +110,7 @@
   .comp-table td{padding:6px 10px;text-align:center;border-top:1px solid var(--hair);}
   .comp-table td:first-child{text-align:left;font-weight:500;color:var(--ink);}
   .comp-table tr:nth-child(even) td{background:var(--paper);}
+  .comp-table input{width:78px;padding:6px 8px;font-size:0.85rem;}
 </style>
 </head>
 <body>
@@ -184,18 +185,33 @@
     <div class="method-panel" data-method="MEQ" style="display:none">
       <div class="section-label">Volumen de agua</div>
       <div class="field-grid"><label>Agua (L)<input class="vol-input" type="number" step="any"></label></div>
-      <div class="section-label">Cationes (meq/L)</div>
-      <div class="field-grid">
-        <label>Calcio (Ca²⁺)<input id="calcioRequerido" type="number" step="any"></label>
-        <label>Potasio (K⁺)<input id="potasioRequerido" type="number" step="any"></label>
-        <label>Magnesio (Mg²⁺)<input id="magnesioRequerido" type="number" step="any"></label>
-        <label>Amonio (NH₄⁺)<input id="amonioMeqRequerido" type="number" step="any"></label>
+      <div class="section-label">Modo</div>
+      <div class="chip-row" id="meqModo-chips">
+        <button type="button" class="chip active" data-modo="directo">Directo</button>
+        <button type="button" class="chip" data-modo="lisimetro">Análisis de agua/Lisímetro</button>
       </div>
-      <div class="section-label">Aniones (meq/L)</div>
-      <div class="field-grid">
-        <label>Nitrato (NO₃⁻)<input id="nitratoMeqRequerido" type="number" step="any"></label>
-        <label>Fosfato (H₂PO₄⁻)<input id="fosfatoRequerido" type="number" step="any"></label>
-        <label>Sulfato (SO₄²⁻)<input id="sulfatoRequerido" type="number" step="any"></label>
+      <p class="hint" id="meqModoHint"></p>
+      <div id="meq-directo">
+        <div class="section-label">Cationes (meq/L)</div>
+        <div class="field-grid">
+          <label>Calcio (Ca²⁺)<input id="dirCa" type="number" step="any"></label>
+          <label>Potasio (K⁺)<input id="dirK" type="number" step="any"></label>
+          <label>Magnesio (Mg²⁺)<input id="dirMg" type="number" step="any"></label>
+          <label>Amonio (NH₄⁺)<input id="dirNh4" type="number" step="any"></label>
+        </div>
+        <div class="section-label">Aniones (meq/L)</div>
+        <div class="field-grid">
+          <label>Nitrato (NO₃⁻)<input id="dirNo3" type="number" step="any"></label>
+          <label>Fosfato (H₂PO₄⁻)<input id="dirH2po4" type="number" step="any"></label>
+          <label>Sulfato (SO₄²⁻)<input id="dirSo4" type="number" step="any"></label>
+        </div>
+      </div>
+      <div id="meq-lisimetro" style="display:none">
+        <div class="section-label">Balance de la solución (todo en meq/L)</div>
+        <div class="comp-table-wrap"><table class="comp-table"><thead><tr>
+          <th>Ion</th><th>Análisis de agua/Lisímetro</th><th>Solución ideal</th><th>Aportes previstos</th>
+        </tr></thead><tbody id="meq-tabla"></tbody></table></div>
+        <p class="hint">Cl⁻ y Na⁺ son solo de referencia y no entran al cálculo. Bicarbonato, pH y CE se manejan en el método de pH.</p>
       </div>
     </div>
 
@@ -281,8 +297,8 @@
     <div class="field-grid">
       <label>Nombre*<input id="perfilNombre" type="text" placeholder="Tu nombre"></label>
       <label>Empresa / Consultoría<input id="perfilEmpresa" type="text"></label>
-      <label>Teléfono<input id="perfilTelefono" type="text"></label>
-      <label>Correo<input id="perfilEmail" type="text"></label>
+      <label>Teléfono (10 dígitos)<input id="perfilTelefono" type="text" inputmode="numeric" maxlength="10"></label>
+      <label>Correo<input id="perfilEmail" type="text"><small id="perfilEmailError" style="display:none;color:#b3392e;font-size:0.75rem">Correo inválido, revisá el formato (ej. nombre@dominio.com)</small></label>
     </div>
     <p class="hint">Se guarda en este navegador (no se envía a ningún servidor) para no tener que volver a escribirlo.</p>
 
@@ -291,7 +307,8 @@
       <label>Nombre del productor<input id="recetaProductor" type="text"></label>
       <label>Cultivo<input id="recetaCultivo" type="text"></label>
       <label>Empresa / Rancho<input id="recetaRancho" type="text"></label>
-      <label>Superficie<input id="recetaArea" type="text"></label>
+      <label>Superficie (ha)<input id="recetaArea" type="text" inputmode="decimal"></label>
+      <label>Municipio<input id="recetaMunicipio" type="text"></label>
     </div>
     <div class="chip-row" id="tipoAplicacion-chips" style="margin-top:10px;">
       <button type="button" class="chip active" data-aplic="Riego">Riego</button>
@@ -342,8 +359,9 @@
 
       <h3>🧪 Método 4: Miliequivalentes por litro (MEQ/L)</h3>
       <p>El método más preciso para balancear soluciones hidropónicas profesionales.</p>
-      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen en litros<br>2. Ingresá los meq/L de: Ca²⁺, K⁺, Mg²⁺, NH₄⁺, NO₃⁻, H₂PO₄⁻, SO₄²⁻<br>3. Seleccioná los fertilizantes disponibles<br>4. Presioná "Calcular receta"</p>
+      <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen en litros<br>2. Modo "Directo": ingresá los meq/L de Ca²⁺, K⁺, Mg²⁺, NH₄⁺, NO₃⁻, H₂PO₄⁻, SO₄²⁻ que querés (solo los que ocupes, sin tomar en cuenta el agua)<br>3. Modo "Análisis de agua/Lisímetro": en la tabla llená la columna "Solución ideal" y, opcional, "Análisis de agua/Lisímetro" (tu agua o chupatubos); la app descuenta lo que el agua ya aporta y "Aportes previstos" se calcula sola<br>4. Seleccioná los fertilizantes disponibles<br>5. Presioná "Calcular receta"</p>
       <p class="warn">⚠️ Regla: cationes (Ca²⁺+K⁺+Mg²⁺+NH₄⁺) = aniones (NO₃⁻+H₂PO₄⁻+SO₄²⁻). La calculadora no verifica esto, cuidá el balance.</p>
+      <p class="tip">💡 Análisis del agua: si el agua ya trae 1.5 meq/L de Ca²⁺ y pedís 4, se calcula el fertilizante solo para los 2.5 meq/L que faltan. Cl⁻ y Na⁺ son solo de referencia.</p>
       <hr>
 
       <h3>🌿 Método 5: Microelementos (mg/L)</h3>
@@ -356,23 +374,29 @@
       <p>Calcula la cantidad de ácido para neutralizar bicarbonatos y ajustar el pH.</p>
       <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen de agua en litros<br>2. Ingresá los bicarbonatos en meq/L (del análisis de agua)<br>3. Seleccioná el tipo de ácido (Nítrico, Fosfórico o Sulfúrico)<br>4. Ingresá densidad (g/mL) y pureza (%)<br>5. Presioná "Calcular ácido"</p>
       <p class="tip">💡 Siempre se deja 0.5 meq/L de remanente para estabilidad del pH.<br>💡 Ej: 3.5 meq/L bicarbonatos, 1000 L, ácido nítrico 68%, densidad 1.41 → ≈ 200 mL</p>
+      <p><b>Orden de aplicación recomendado</b><br>1. Agregá solo el 80 % del ácido calculado al agua<br>2. Agregá los fertilizantes y mezclá bien<br>3. Medí el pH de la solución<br>4. Si el pH sigue por encima del objetivo, agregá el 20 % restante de a poco, midiendo de nuevo</p>
+      <p class="tip">💡 Ej: si la calculadora da 200 mL, aplicá primero 160 mL y dejá 40 mL para ajustar al final. Algunos fertilizantes como el MAP bajan el pH, y quizá ya no necesites el 20 % restante.</p>
       <hr>
 
       <h3>🔄 Método 7: Conversión (varios fertilizantes → ppm y meq/L)</h3>
       <p>Convierte una receta completa (uno o varios fertilizantes, y hasta ácidos) en el aporte real de ppm y meq/L a la solución. Sirve para revisar o comparar una receta ya armada.</p>
       <p><b>¿Cómo usarlo?</b><br>1. Ingresá el volumen total de agua de la receta<br>2. Elegí el tipo de producto: "Conocido" (de la lista), "Personalizado" (uno propio) o "Ácido"<br>3. Completá los datos de ese producto y presioná "Agregar a la receta"<br>4. Repetí por cada fertilizante o ácido que uses en la misma mezcla<br>5. Presioná "Calcular receta": suma el aporte de todos los productos<br>6. Exportá el resultado a PDF con "Exportar plan de aplicación"</p>
       <p class="tip">💡 Para líquidos se usa: %/100 × densidad × cantidad = gramos de nutriente.<br>💡 Con un fertilizante conocido, el meq/L se calcula con el peso equivalente de la sal completa (relación 1:1 catión/anión).<br>💡 Microelementos siempre en ppm, nunca en meq/L, porque en fertirriego no se balancean por equivalentes.</p>
+      <p class="tip">💡 Nitrógeno en "Personalizado": N total, N nítrico (N-NO₃⁻) y N amoniacal (N-NH₄⁺) son campos independientes. El meq/L del N total solo cuenta el N que no declaraste ya como nítrico o amoniacal, para no sumarlo dos veces.</p>
+      <p class="tip">💡 Los ácidos también aportan ppm del ion (nitrato, fosfato o sulfato). El ppm de P y S se muestra como fosfato y sulfato, no como P₂O₅ ni S sueltos. Los cloruros (KCl y CaCl₂) aportan Cl⁻ en ppm y meq/L.</p>
       <hr>
 
       <h3>💧 Método 8: Disolución (C₁V₁ = C₂V₂)</h3>
       <p>Sirve para diluir productos concentrados (hormonas como citocininas, AIB, ANA; fertilizantes líquidos; soluciones stock) a una concentración final de trabajo.</p>
       <p><b>¿Cómo usarlo?</b><br>1. (Opcional) Escribe el nombre de lo que diluyes<br>2. Ingresa la cantidad TOTAL disuelta en tu envase (ej. 1381 meq)<br>3. Ingresa el volumen de ese envase (ej. 3.4 L)<br>4. Ingresa la concentración que quieres lograr y su unidad<br>5. Ingresa el volumen final a preparar<br>6. Presiona "Calcular dilución"</p>
       <p class="tip">💡 Ej: 1381 meq en 3.4 L, quieres 6 meq/L en 1 L → tomas ≈14.8 mL y completas hasta 1 L.</p>
+      <p class="tip">💡 Ej: 500 mL de citocininas en un frasco de 1 L y quieres 2 ppm en 100 L → pon 500 (cantidad total), 1 (volumen del envase), 2 (concentración) y 100 (volumen final).</p>
       <hr>
 
       <h3>📋 Composición de fertilizantes</h3>
       <p>Tabla de referencia con el % en peso de cada nutriente que aporta cada fertilizante — los mismos valores que usa la calculadora. Deslizá hacia los lados para ver todas las columnas.</p>
       <div class="comp-table-wrap"><div id="tabla-composicion"></div></div>
+      <p class="tip">💡 Cloruros: el Cloruro de potasio granulado trae 60 % K₂O y 45 % Cl; el Cloruro de calcio (anhidro) trae 36.11 % Ca y 63.89 % Cl. Cuidado con cultivos sensibles al cloruro.</p>
       <hr>
 
       <h3>📊 Valores de referencia para hidroponía</h3>
@@ -407,7 +431,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const nombresFertilizantesMacro = [
-  "Nitrato de Calcio","Nitrato de Potasio","Fosfato Monoamónico (MAP)","Fosfato Diamónico (DAP)",
+  "Nitrato de Calcio","Cloruro de calcio","Nitrato de Potasio","Cloruro de potasio granulado","Fosfato Monoamónico (MAP)","Fosfato Diamónico (DAP)",
   "Sulfato de Magnesio","Sulfato de Potasio","Nitrato de Magnesio","Sulfato de amonio",
   "Fosfato monopotasico","Fosfonitrato","Urea"
 ];
@@ -418,10 +442,12 @@ const nombresFertilizantesMicro = [
 
 const fertilizantesConocidosComposicion = [
   {nombre:"Nitrato de Calcio",        composicion:{N:0.155, Ca:0.19}},
+  {nombre:"Cloruro de calcio", composicion:{Ca:0.3611, Cl:0.6389}},
   {nombre:"Fosfato monopotasico",      composicion:{P2O5:0.52, K2O:0.34}},
   {nombre:"Fosfato Monoamónico (MAP)", composicion:{N:0.12, P2O5:0.61}},
   {nombre:"Fosfato Diamónico (DAP)",   composicion:{N:0.18, P2O5:0.46}},
   {nombre:"Nitrato de Potasio",        composicion:{N:0.13, K2O:0.46}},
+  {nombre:"Cloruro de potasio granulado", composicion:{K2O:0.60, Cl:0.45}},
   {nombre:"Sulfato de Potasio",        composicion:{K2O:0.50, SO4:0.18}},
   {nombre:"Urea",                      composicion:{N:0.46}},
   {nombre:"Sulfato de Magnesio",       composicion:{Mg:0.0986, SO4:0.13}},
@@ -438,6 +464,7 @@ const fertilizantesConocidosComposicion = [
 ];
 
 const pesosEquivalentesSalConocida = {
+  "Cloruro de calcio":55.49, "Cloruro de potasio granulado":74.55,
   "Nitrato de Calcio":118.08, "Fosfato monopotasico":136.09, "Fosfato Monoamónico (MAP)":115.03,
   "Fosfato Diamónico (DAP)":66.03, "Nitrato de Potasio":101.10, "Sulfato de Potasio":87.13,
   "Sulfato de Magnesio":123.24, "Nitrato de Magnesio":128.21, "Sulfato de amonio":66.07,
@@ -445,6 +472,7 @@ const pesosEquivalentesSalConocida = {
 };
 
 const ionesPorSalConocida = {
+  "Cloruro de calcio":["Ca²⁺","Cl⁻"], "Cloruro de potasio granulado":["K⁺","Cl⁻"],
   "Nitrato de Calcio":["Ca²⁺","NO₃⁻"], "Fosfato monopotasico":["K⁺","H₂PO₄⁻"],
   "Fosfato Monoamónico (MAP)":["NH₄⁺","H₂PO₄⁻"], "Fosfato Diamónico (DAP)":["NH₄⁺","H₂PO₄⁻"],
   "Nitrato de Potasio":["K⁺","NO₃⁻"], "Sulfato de Potasio":["K⁺","SO₄²⁻"],
@@ -462,13 +490,15 @@ const state = {
   caPpmRequerido:'', kPpmRequerido:'', mgPpmRequerido:'', pPpmRequerido:'', sPpmRequerido:'',
   nitratosRequerido:'', amonioRequerido:'',
   ceRequerida:'1.5',
+  meqModoLisimetro:false, dirCa:'', dirK:'', dirMg:'', dirNh4:'', dirNo3:'', dirH2po4:'', dirSo4:'',
+  aguaNo3:'', aguaH2po4:'', aguaSo4:'', aguaNh4:'', aguaK:'', aguaCa:'', aguaMg:'', aguaCl:'', aguaNa:'',
   calcioRequerido:'', potasioRequerido:'', magnesioRequerido:'', amonioMeqRequerido:'',
   nitratoMeqRequerido:'', fosfatoRequerido:'', sulfatoRequerido:'',
   feDeseado:'', fePorcentaje:'', mnDeseado:'', znDeseado:'', cuDeseado:'', bDeseado:'', moDeseado:'',
   bicarbonatos:'', tipoAcido:'Nítrico', densidadAcido:'', purezaAcido:'', resultadoNeutralizacion:'',
   volumenInverso:'1000', inversoTipoItem:'CONOCIDO', fertilizanteInversoSeleccionado:'Nitrato de Calcio',
   inversoEsLiquido:false, inversoDensidad:'', inversoNombrePersonalizado:'',
-  inversoPctN:'', inversoPctNO3deN:'', inversoPctP2O5:'', inversoPctK2O:'', inversoPctCa:'',
+  inversoPctN:'', inversoPctNNO3:'', inversoPctNNH4:'', inversoPctP2O5:'', inversoPctK2O:'', inversoPctCa:'',
   inversoPctMg:'', inversoPctS:'', inversoPctFe:'', inversoPctMn:'', inversoPctZn:'',
   inversoPctCu:'', inversoPctB:'', inversoPctMo:'',
   inversoTipoAcido:'Nítrico', inversoDensidadAcido:'', inversoPurezaAcido:'',
@@ -495,7 +525,7 @@ try{
 function guardarPerfilStorage(){ try{ localStorage.setItem('agro_perfil', JSON.stringify(perfil)); }catch(e){} }
 
 // ─── Datos de la receta puntual (no persisten entre sesiones) ─────────────
-const recetaInfo = { productor:'', cultivo:'', rancho:'', area:'', tipoAplicacion:'Riego', observaciones:'' };
+const recetaInfo = { productor:'', cultivo:'', rancho:'', municipio:'', area:'', tipoAplicacion:'Riego', observaciones:'' };
 
 // ─── Receta acumulada: junta varios métodos calculados en un solo PDF ─────
 const recetaAcumulada = {};
@@ -556,11 +586,13 @@ function calcularUnidades(){
 
   const todosFertilizantes = [
     {nombre:"Nitrato de Calcio", concentraciones:{N:0.155, Ca:0.19}},
+    {nombre:"Cloruro de calcio", concentraciones:{Ca:0.3611}},
     {nombre:"Fosfato monopotasico", concentraciones:{P2O5:0.52, K2O:0.34}},
     {nombre:"Fosfato Monoamónico (MAP)", concentraciones:{N:0.12, P2O5:0.61}},
     {nombre:"Fosfato Diamónico (DAP)", concentraciones:{N:0.18, P2O5:0.46}},
     {nombre:"Nitrato de Potasio", concentraciones:{N:0.13, K2O:0.46}},
     {nombre:"Sulfato de Potasio", concentraciones:{K2O:0.50, SO4:0.18}},
+    {nombre:"Cloruro de potasio granulado", concentraciones:{K2O:0.60}},
     {nombre:"Fosfonitrato", concentraciones:{N:0.33, P2O5:0.03}},
     {nombre:"Urea", concentraciones:{N:0.46}},
     {nombre:"Sulfato de Magnesio", concentraciones:{Mg:0.0986, SO4:0.13}},
@@ -614,13 +646,17 @@ function calcularPPM(){
   let mgRestante = num(state.mgPpmRequerido);
   let pRestante = num(state.pPpmRequerido)/3.132;
   let sRestante = num(state.sPpmRequerido)/2.996;
-  let no3Cubierto=0, nh4Cubierto=0, kCubierto=0, caCubierto=0, mgCubierto=0, pCubierto=0, sCubierto=0;
+  let no3Cubierto=0, nh4Cubierto=0, kCubierto=0, caCubierto=0, mgCubierto=0, pCubierto=0, sCubierto=0, clCubierto=0;
 
   if(sel["Nitrato de Calcio"] && caRestante>0){
     const cantidad=caRestante/0.19, gramos=(cantidad*vol)/1000;
     resultados["Nitrato de Calcio (por Ca)"]=formatearGramos(gramos);
     const no3Aportado=cantidad*0.155; no3Restante=Math.max(0,no3Restante-no3Aportado);
     caCubierto+=caRestante; no3Cubierto+=no3Aportado; caRestante=0;
+  } else if(sel["Cloruro de calcio"] && caRestante>0){
+    const cantidad=caRestante/0.3611, gramos=(cantidad*vol)/1000;
+    resultados["Cloruro de calcio (por Ca)"]=formatearGramos(gramos);
+    clCubierto+=cantidad*0.6389; caCubierto+=caRestante; caRestante=0;
   }
   if(kRestante>0){
     if(sel["Nitrato de Potasio"]){
@@ -638,6 +674,10 @@ function calcularPPM(){
       resultados["Sulfato de Potasio (por K)"]=formatearGramos(gramos);
       const sAportado=cantidad*0.184; sRestante=Math.max(0,sRestante-sAportado);
       kCubierto+=kRestante; sCubierto+=sAportado; kRestante=0;
+    } else if(sel["Cloruro de potasio granulado"]){
+      const cantidad=kRestante/0.498, gramos=(cantidad*vol)/1000;
+      resultados["Cloruro de potasio granulado (por K)"]=formatearGramos(gramos);
+      clCubierto+=cantidad*0.45; kCubierto+=kRestante; kRestante=0;
     }
   }
   if(mgRestante>0){
@@ -715,6 +755,7 @@ function calcularPPM(){
   if(mgCubierto>0) aportes["Mg²⁺ cubierto (ppm)"]=mgCubierto;
   if(pCubierto>0) aportes["Fosfato cubierto (ppm)"]=pCubierto*3.132;
   if(sCubierto>0) aportes["Sulfato cubierto (ppm)"]=sCubierto*2.996;
+  if(clCubierto>0) aportes["Cloruro (Cl⁻) aportado (ppm)"]=clCubierto;
   resultadosNutrientesAportados = aportes;
 }
 
@@ -744,20 +785,33 @@ function calcularMEQ(){
   if(vol<=0){ mensajeError="El volumen debe ser mayor a 0"; return; }
   const sel = fertilizantesSeleccionados;
 
-  let caRestante=num(state.calcioRequerido), kRestante=num(state.potasioRequerido),
-      mgRestante=num(state.magnesioRequerido), nh4Restante=num(state.amonioMeqRequerido),
-      no3Restante=num(state.nitratoMeqRequerido), h2po4Restante=num(state.fosfatoRequerido),
-      so4Restante=num(state.sulfatoRequerido);
+  const L=state.meqModoLisimetro;
+  const gv=(lis,dir)=>num(L?state[lis]:state[dir]);
+  const ag=k=>L?num(state[k]):0;
+  const caP=gv('calcioRequerido','dirCa'), kP=gv('potasioRequerido','dirK'), mgP=gv('magnesioRequerido','dirMg'),
+        nh4P=gv('amonioMeqRequerido','dirNh4'), no3P=gv('nitratoMeqRequerido','dirNo3'),
+        h2po4P=gv('fosfatoRequerido','dirH2po4'), so4P=gv('sulfatoRequerido','dirSo4');
+  const aCa=ag('aguaCa'), aK=ag('aguaK'), aMg=ag('aguaMg'), aNh4=ag('aguaNh4'), aNo3=ag('aguaNo3'), aH2po4=ag('aguaH2po4'), aSo4=ag('aguaSo4');
+  let caRestante=Math.max(0,caP-aCa), kRestante=Math.max(0,kP-aK), mgRestante=Math.max(0,mgP-aMg),
+      nh4Restante=Math.max(0,nh4P-aNh4), no3Restante=Math.max(0,no3P-aNo3),
+      h2po4Restante=Math.max(0,h2po4P-aH2po4), so4Restante=Math.max(0,so4P-aSo4);
+  const aportesAgua={};
+  [["Ca²⁺",aCa,caP],["K⁺",aK,kP],["Mg²⁺",aMg,mgP],["NH₄⁺",aNh4,nh4P],["NO₃⁻",aNo3,no3P],["H₂PO₄⁻",aH2po4,h2po4P],["SO₄²⁻",aSo4,so4P]]
+    .forEach(([n,a,p])=>{ const u=Math.min(a,p); if(u>0) aportesAgua[n+" aportado por el agua"]=u; });
+  if(caRestante+kRestante+mgRestante+nh4Restante+no3Restante+h2po4Restante+so4Restante<=0 && Object.keys(aportesAgua).length>0){
+    mensajeError="El agua ya cubre todo lo que pediste, no necesitas agregar fertilizantes."; return;
+  }
 
   const asignaciones = {};
   const pesosEq = {
     "Nitrato de Calcio":118.08, "Nitrato de Potasio":101.10, "Sulfato de Magnesio":123.24,
     "Fosfato Monoamónico (MAP)":115.03, "Fosfato Diamónico (DAP)":66.03, "Sulfato de Potasio":87.13,
     "Nitrato de Magnesio":128.21, "Sulfato de amonio":66.07, "Fosfato monopotasico":136.09,
-    "Fosfonitrato": 28.0/0.33
+    "Fosfonitrato": 28.0/0.33, "Cloruro de calcio":55.49, "Cloruro de potasio granulado":74.55
   };
 
   if(sel["Nitrato de Calcio"] && caRestante>0){ asignaciones["Nitrato de Calcio"]=caRestante; no3Restante-=caRestante; caRestante=0; }
+  else if(sel["Cloruro de calcio"] && caRestante>0){ asignaciones["Cloruro de calcio"]=caRestante; caRestante=0; }
   if(sel["Fosfato monopotasico"] && (h2po4Restante>0 || kRestante>0)){
     if(h2po4Restante>0){ asignaciones["Fosfato monopotasico (por P)"]=h2po4Restante; kRestante-=h2po4Restante; h2po4Restante=0; }
     else if(kRestante>0){ asignaciones["Fosfato monopotasico (por K)"]=kRestante; h2po4Restante-=kRestante; kRestante=0; }
@@ -772,6 +826,7 @@ function calcularMEQ(){
   if(kRestante>0){
     if(sel["Nitrato de Potasio"]){ asignaciones["Nitrato de Potasio"]=kRestante; no3Restante-=kRestante; kRestante=0; }
     else if(sel["Sulfato de Potasio"]){ asignaciones["Sulfato de Potasio"]=kRestante; so4Restante-=kRestante; kRestante=0; }
+    else if(sel["Cloruro de potasio granulado"]){ asignaciones["Cloruro de potasio granulado"]=kRestante; kRestante=0; }
   }
   if(mgRestante>0){
     if(sel["Sulfato de Magnesio"]){ asignaciones["Sulfato de Magnesio"]=mgRestante; so4Restante-=mgRestante; mgRestante=0; }
@@ -800,7 +855,7 @@ function calcularMEQ(){
   for(const [nombre, meq] of Object.entries(asignaciones)){
     const baseName = baseNombreAsignacion(nombre);
     const peq = pesosEq[baseName];
-    if(peq!=null) resultados[nombre] = ((meq*peq/1000.0)*vol).toFixed(2)+" g";
+    if(peq!=null) resultados[nombre] = ((meq*peq/1000.0)*vol).toFixed(3)+" g";
     else { mensajeError = `Error: sin peso equivalente para ${baseName}`; return; }
   }
 
@@ -815,7 +870,7 @@ function calcularMEQ(){
   if(no3Restante>0.1) noCubiertos["NO₃⁻ sin cubrir"]=no3Restante;
   if(h2po4Restante>0.1) noCubiertos["H₂PO₄⁻ sin cubrir"]=h2po4Restante;
   if(so4Restante>0.1) noCubiertos["SO₄²⁻ sin cubrir"]=so4Restante;
-  resultadosNutrientesAportados = noCubiertos;
+  resultadosNutrientesAportados = {...aportesAgua, ...noCubiertos};
 }
 
 function calcularMicroelementos(){
@@ -891,7 +946,7 @@ function calcularDilucion(){
 
 function nombreDescriptivoIon(simbolo){
   const map={"Ca²⁺":"Calcio (Ca)","K⁺":"Potasio (K₂O)","Mg²⁺":"Magnesio (Mg)","NH₄⁺":"Amonio (NH₄⁺)",
-    "NO₃⁻":"Nitrato (NO₃⁻)","H₂PO₄⁻":"Fosfato (H₂PO₄⁻)","SO₄²⁻":"Sulfato (SO₄²⁻)"};
+    "NO₃⁻":"Nitrato (NO₃⁻)","H₂PO₄⁻":"Fosfato (H₂PO₄⁻)","SO₄²⁻":"Sulfato (SO₄²⁻)","Cl⁻":"Cloruro (Cl⁻)"};
   return map[simbolo] || simbolo;
 }
 
@@ -918,6 +973,7 @@ function construirItemConocido(){
   if(comp.Ca!=null) mg["Calcio (Ca)"] = comp.Ca*cantidad*1000.0;
   if(comp.Mg!=null) mg["Magnesio (Mg)"] = comp.Mg*cantidad*1000.0;
   if(comp.SO4!=null) mg["Sulfato (SO₄²⁻)"] = comp.SO4*cantidad*1000.0*2.996;
+  if(comp.Cl!=null) mg["Cloruro (Cl⁻)"] = comp.Cl*cantidad*1000.0;
   if(comp.Fe!=null) mg["Hierro (Fe)"] = comp.Fe*cantidad*1000.0;
   if(comp.Cu!=null) mg["Cobre (Cu)"] = comp.Cu*cantidad*1000.0;
   if(comp.Zn!=null) mg["Zinc (Zn)"] = comp.Zn*cantidad*1000.0;
@@ -951,13 +1007,13 @@ function construirItemPersonalizado(){
   const masaProducto = esLiquido ? cantidad*densidad : cantidad;
 
   const pctN=num(state.inversoPctN);
-  const pctNO3deN = state.inversoPctNO3deN===''? null : num(state.inversoPctNO3deN);
+  const pctNNO3 = num(state.inversoPctNNO3), pctNNH4 = num(state.inversoPctNNH4);
   const pctP2O5=num(state.inversoPctP2O5), pctK2O=num(state.inversoPctK2O), pctCa=num(state.inversoPctCa),
         pctMg=num(state.inversoPctMg), pctS=num(state.inversoPctS), pctFe=num(state.inversoPctFe),
         pctMn=num(state.inversoPctMn), pctZn=num(state.inversoPctZn), pctCu=num(state.inversoPctCu),
         pctB=num(state.inversoPctB), pctMo=num(state.inversoPctMo);
 
-  if(pctN<=0 && pctP2O5<=0 && pctK2O<=0 && pctCa<=0 && pctMg<=0 && pctS<=0 &&
+  if(pctN<=0 && pctNNO3<=0 && pctNNH4<=0 && pctP2O5<=0 && pctK2O<=0 && pctCa<=0 && pctMg<=0 && pctS<=0 &&
      pctFe<=0 && pctMn<=0 && pctZn<=0 && pctCu<=0 && pctB<=0 && pctMo<=0){
     mensajeError="Ingresá al menos un nutriente de la composición"; return null;
   }
@@ -971,10 +1027,15 @@ function construirItemPersonalizado(){
   function agregarSoloPpm(nombre, fraccion){ if(fraccion<=0.0) return; mg[nombre]=fraccion*masaProducto*1000.0; }
 
   if(pctN>0){
-    const pctNO3Efectivo = pctNO3deN!=null ? Math.min(100, Math.max(0,pctNO3deN)) : 100.0;
-    agregar("Nitrato (NO₃⁻)", (pctN/100.0)*(pctNO3Efectivo/100.0), eqN, 4.427);
-    agregar("Amonio (NH₄⁺)", (pctN/100.0)*(1-pctNO3Efectivo/100.0), eqN, 1.288);
+    mg["Nitrógeno total (N)"] = (pctN/100.0)*masaProducto*1000.0;
+    const sinEsp = Math.max(0, pctN-pctNNO3-pctNNH4);
+    if(sinEsp>0){
+      const et = (pctNNO3+pctNNH4>0) ? "N sin especificar (N)" : "Nitrógeno total (N)";
+      meq[et] = (sinEsp/100.0)*masaProducto*1000.0/eqN;
+    }
   }
+  agregar("Nitrato (NO₃⁻)", pctNNO3/100.0, eqN, 4.427);
+  agregar("Amonio (NH₄⁺)", pctNNH4/100.0, eqN, 1.288);
   agregar("Fosfato (H₂PO₄⁻)", pctP2O5/100.0, eqP2O5, 1.3665);
   agregar("Potasio (K₂O)", pctK2O/100.0, eqK2O);
   agregar("Calcio (Ca)", pctCa/100.0, eqCa);
@@ -1008,7 +1069,7 @@ function construirItemAcido(){
   const ion = state.inversoTipoAcido==="Nítrico" ? "NO₃⁻" : (state.inversoTipoAcido==="Fosfórico" ? "H₂PO₄⁻" : "SO₄²⁻");
   const masaPuraG = cantidadML*densidad*pureza;
   const meqTotal = masaPuraG*1000.0/pesoEqAcido;
-  return { id: nextId(), etiqueta: `Ácido ${state.inversoTipoAcido}`, cantidadTexto: `${cantidadML.toFixed(1)} mL`, mgPorNutriente:{}, meqPorIon:{[ion]:meqTotal} };
+  return { id: nextId(), etiqueta: `Ácido ${state.inversoTipoAcido}`, cantidadTexto: `${cantidadML.toFixed(1)} mL`, mgPorNutriente:{[nombreDescriptivoIon(ion)]: meqTotal*({"Nítrico":62.00,"Fosfórico":96.99,"Sulfúrico":48.03}[state.inversoTipoAcido])}, meqPorIon:{[nombreDescriptivoIon(ion)]:meqTotal} };
 }
 
 function agregarItemInverso(){
@@ -1020,7 +1081,7 @@ function agregarItemInverso(){
   if(!item) return false;
   state.itemsInverso.push(item);
   state.cantidadInversa=''; state.inversoDensidad=''; state.inversoNombrePersonalizado='';
-  state.inversoPctN=''; state.inversoPctNO3deN=''; state.inversoPctP2O5='';
+  state.inversoPctN=''; state.inversoPctNNO3=''; state.inversoPctNNH4=''; state.inversoPctP2O5='';
   state.inversoPctK2O=''; state.inversoPctCa=''; state.inversoPctMg=''; state.inversoPctS='';
   state.inversoPctFe=''; state.inversoPctMn=''; state.inversoPctZn=''; state.inversoPctCu=''; state.inversoPctB=''; state.inversoPctMo='';
   state.inversoDensidadAcido=''; state.inversoPurezaAcido='';
@@ -1081,7 +1142,7 @@ function renderResultados(){
   if(hasSecundario){
     html += `<div class="result-header alt">${tituloSecundario}</div>`;
     Object.entries(resultadosNutrientesAportados).forEach(([k,v])=>{
-      html += `<div class="result-row"><span>${escapeHtml(k)}</span><b>${Number(v).toFixed(2)}</b></div>`;
+      html += `<div class="result-row"><span>${escapeHtml(k)}</span><b>${Number(v).toFixed(3)}</b></div>`;
     });
   }
   html += '</div>';
@@ -1140,14 +1201,15 @@ function renderInversoSub(){
       <div class="section-label">Composición declarada (% en peso)</div>
       <div class="field-grid">
         <label>Nitrógeno total (N)<input id="inversoPctN" type="number" step="any" value="${escapeHtml(state.inversoPctN)}"></label>
-        <label>% de N como NO₃⁻ (vacío = 100%)<input id="inversoPctNO3deN" type="number" step="any" value="${escapeHtml(state.inversoPctNO3deN)}"></label>
+        <label>N nítrico (N-NO₃⁻)<input id="inversoPctNNO3" type="number" step="any" value="${escapeHtml(state.inversoPctNNO3)}"></label>
+        <label>N amoniacal (N-NH₄⁺)<input id="inversoPctNNH4" type="number" step="any" value="${escapeHtml(state.inversoPctNNH4)}"></label>
         <label>Fósforo (P₂O₅)<input id="inversoPctP2O5" type="number" step="any" value="${escapeHtml(state.inversoPctP2O5)}"></label>
         <label>Potasio (K₂O)<input id="inversoPctK2O" type="number" step="any" value="${escapeHtml(state.inversoPctK2O)}"></label>
         <label>Calcio (Ca)<input id="inversoPctCa" type="number" step="any" value="${escapeHtml(state.inversoPctCa)}"></label>
         <label>Magnesio (Mg)<input id="inversoPctMg" type="number" step="any" value="${escapeHtml(state.inversoPctMg)}"></label>
         <label>Azufre (S)<input id="inversoPctS" type="number" step="any" value="${escapeHtml(state.inversoPctS)}"></label>
       </div>
-      <p class="hint">Dejá el % de N como NO₃⁻ vacío si el fertilizante solo tiene una forma de N (ej. urea). El % restante se asume NH₄⁺.</p>
+      <p class="hint">Cada campo se calcula por separado: el N total, el nítrico y el amoniacal no se convierten entre sí. Llená solo lo que declara la etiqueta (los % son como N). Los campos vacíos cuentan como 0.</p>
       <div class="section-label">Microelementos (opcional, % en peso)</div>
       <div class="field-grid">
         <label>Hierro (Fe)<input id="inversoPctFe" type="number" step="any" value="${escapeHtml(state.inversoPctFe)}"></label>
@@ -1160,7 +1222,7 @@ function renderInversoSub(){
       <div class="section-label">Cantidad usada</div>
       <div class="field-grid"><label>Cantidad usada (${state.inversoEsLiquido?'mL':'g'})<input id="cantidadInversa" type="number" step="any" value="${escapeHtml(state.cantidadInversa)}"></label></div>
     `;
-    ['inversoNombrePersonalizado','inversoPctN','inversoPctNO3deN','inversoPctP2O5','inversoPctK2O','inversoPctCa',
+    ['inversoNombrePersonalizado','inversoPctN','inversoPctNNO3','inversoPctNNH4','inversoPctP2O5','inversoPctK2O','inversoPctCa',
      'inversoPctMg','inversoPctS','inversoPctFe','inversoPctMn','inversoPctZn','inversoPctCu','inversoPctB','inversoPctMo',
      'cantidadInversa','inversoDensidad'].forEach(key=>{
       const el = document.getElementById(key);
@@ -1240,7 +1302,7 @@ const simpleFields = ['nRequerido','pRequerido','kRequerido','caRequerido','mgRe
   'caPpmRequerido','kPpmRequerido','mgPpmRequerido','pPpmRequerido','sPpmRequerido','nitratosRequerido','amonioRequerido',
   'calcioRequerido','potasioRequerido','magnesioRequerido','amonioMeqRequerido','nitratoMeqRequerido','fosfatoRequerido','sulfatoRequerido',
   'feDeseado','fePorcentaje','mnDeseado','znDeseado','cuDeseado','bDeseado','moDeseado',
-  'bicarbonatos','densidadAcido','purezaAcido','volumenInverso','nombreSolutoDilucion','cantidadTotalDilucion','volumenInicialDilucion','concFinalDilucion','volumenFinalDilucion','unidadDilucion'];
+  'dirCa','dirK','dirMg','dirNh4','dirNo3','dirH2po4','dirSo4','bicarbonatos','densidadAcido','purezaAcido','volumenInverso','nombreSolutoDilucion','cantidadTotalDilucion','volumenInicialDilucion','concFinalDilucion','volumenFinalDilucion','unidadDilucion'];
 simpleFields.forEach(id=>{
   const el = document.getElementById(id);
   if(el){ el.value = state[id]; el.addEventListener('input', ()=>{ state[id]=el.value; }); }
@@ -1296,7 +1358,7 @@ document.getElementById('perfilEmail').value = perfil.email;
   document.getElementById('perfil'+campo).addEventListener('input', e=>{ perfil[key]=e.target.value; guardarPerfilStorage(); });
 });
 
-['recetaProductor','recetaCultivo','recetaRancho','recetaArea'].forEach(id=>{
+['recetaProductor','recetaCultivo','recetaRancho','recetaMunicipio','recetaArea'].forEach(id=>{
   const key = id.replace('receta','').charAt(0).toLowerCase() + id.replace('receta','').slice(1);
   document.getElementById(id).addEventListener('input', e=>{ recetaInfo[key]=e.target.value; });
 });
@@ -1355,6 +1417,7 @@ function generarPDF(){
     return null;
   }
   // Si todavía no se guardó nada en la receta acumulada pero hay un cálculo activo, lo sumamos.
+  if(perfil.email.trim() && !REGEX_CORREO.test(perfil.email.trim())){ alert('El correo del perfil no tiene un formato válido.'); document.getElementById('perfilEmail').focus(); return null; }
   if(Object.keys(recetaAcumulada).length===0) guardarEnRecetaAcumulada();
   if(Object.keys(recetaAcumulada).length===0){
     alert('Calculá al menos una dosis antes de exportar el PDF.');
@@ -1386,8 +1449,9 @@ function generarPDF(){
   doc.text('Datos de la receta', 14, y); y+=6;
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
   doc.text(`Productor: ${recetaInfo.productor || '—'}`, 14, y); y+=5;
-  doc.text(`Cultivo: ${recetaInfo.cultivo || '—'}    Superficie: ${recetaInfo.area || '—'}`, 14, y); y+=5;
-  doc.text(`Empresa / Rancho: ${recetaInfo.rancho || '—'}    Aplicación: ${recetaInfo.tipoAplicacion}`, 14, y); y+=9;
+  doc.text(`Cultivo: ${recetaInfo.cultivo || '—'}    Superficie: ${recetaInfo.area ? recetaInfo.area+' ha' : '—'}`, 14, y); y+=5;
+  doc.text(`Empresa / Rancho: ${recetaInfo.rancho || '—'}    Aplicación: ${recetaInfo.tipoAplicacion}`, 14, y); y+=5;
+  doc.text(`Municipio: ${recetaInfo.municipio || '—'}`, 14, y); y+=9;
 
   Object.entries(recetaAcumulada).forEach(([tipo, item])=>{
     if(y>265){ doc.addPage(); y=20; }
@@ -1468,7 +1532,7 @@ if(!(navigator.share)) document.getElementById('btn-compartir-pdf').style.displa
 function renderTablaComposicion(){
   const columnas = [
     ['Fertilizante', null], ['N %','N'], ['P₂O₅ %','P2O5'], ['K₂O %','K2O'],
-    ['Ca %','Ca'], ['Mg %','Mg'], ['S %','SO4'], ['Fe %','Fe'], ['Cu %','Cu'],
+    ['Ca %','Ca'], ['Mg %','Mg'], ['S %','SO4'], ['Cl %','Cl'], ['Fe %','Fe'], ['Cu %','Cu'],
     ['Zn %','Zn'], ['Mn %','Mn'], ['B %','B'], ['Mo %','Mo']
   ];
   let html = '<table class="comp-table"><thead><tr>' + columnas.map(([t])=>`<th>${escapeHtml(t)}</th>`).join('') + '</tr></thead><tbody>';
@@ -1489,6 +1553,59 @@ renderTablaComposicion();
 document.getElementById('btn-ayuda').addEventListener('click', ()=>{ document.getElementById('ayuda-modal').classList.add('open'); });
 document.getElementById('ayuda-cerrar').addEventListener('click', ()=>{ document.getElementById('ayuda-modal').classList.remove('open'); });
 document.getElementById('ayuda-modal').addEventListener('click', e=>{ if(e.target.id==='ayuda-modal') e.currentTarget.classList.remove('open'); });
+
+// ─── MEQ: modos Directo / Análisis de agua-Lisímetro ──────────────────────
+const filasMeq = [['NO₃⁻','aguaNo3','nitratoMeqRequerido'],['H₂PO₄⁻','aguaH2po4','fosfatoRequerido'],['SO₄²⁻','aguaSo4','sulfatoRequerido'],['Cl⁻','aguaCl',null],
+  ['NH₄⁺','aguaNh4','amonioMeqRequerido'],['K⁺','aguaK','potasioRequerido'],['Ca²⁺','aguaCa','calcioRequerido'],['Mg²⁺','aguaMg','magnesioRequerido'],['Na⁺','aguaNa',null]];
+function actualizarAportesMeq(){
+  filasMeq.forEach(([ion,a,i])=>{
+    const el = document.getElementById('ap_'+a); if(!el) return;
+    if(!i){ el.textContent='—'; return; }
+    const v = Math.max(0, num(state[i])-num(state[a]));
+    el.textContent = v>0 ? String(+v.toFixed(3)) : '—';
+  });
+}
+document.getElementById('meq-tabla').innerHTML = filasMeq.map(([ion,a,i])=>
+  `<tr><td>${ion}</td><td><input id="${a}" type="number" step="any"></td><td>${i?`<input id="${i}" type="number" step="any">`:'—'}</td><td id="ap_${a}">—</td></tr>`).join('');
+filasMeq.forEach(([ion,a,i])=>[a,i].forEach(id=>{
+  if(!id) return;
+  const el = document.getElementById(id); el.value = state[id];
+  el.addEventListener('input', ()=>{ state[id]=el.value; actualizarAportesMeq(); });
+}));
+function renderModoMeq(){
+  const l = state.meqModoLisimetro;
+  document.getElementById('meq-directo').style.display = l ? 'none' : 'block';
+  document.getElementById('meq-lisimetro').style.display = l ? 'block' : 'none';
+  document.querySelectorAll('#meqModo-chips .chip').forEach(b=>b.classList.toggle('active', (b.dataset.modo==='lisimetro')===l));
+  document.getElementById('meqModoHint').textContent = l
+    ? 'Llená solo lo que necesites: la app descuenta lo que el agua ya aporta.'
+    : 'Ingresá directamente los meq/L que querés, sin tomar en cuenta el agua. Solo llená los que ocupes.';
+}
+document.querySelectorAll('#meqModo-chips .chip').forEach(b=>b.addEventListener('click', ()=>{ state.meqModoLisimetro = b.dataset.modo==='lisimetro'; renderModoMeq(); }));
+renderModoMeq();
+
+// ─── Validaciones de perfil / receta ───────────────────────────────────────
+const REGEX_CORREO = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+function filtrarDecimalPositivo(s){
+  let out='', punto=false;
+  for(const c of s){ if(/[0-9]/.test(c)) out+=c; else if(c==='.' && !punto){ out+=c; punto=true; } }
+  return out;
+}
+document.getElementById('perfilTelefono').addEventListener('input', e=>{
+  const f = e.target.value.replace(/\D/g,'').slice(0,10);
+  e.target.value = f; perfil.telefono = f; guardarPerfilStorage();
+});
+document.getElementById('perfilEmail').addEventListener('input', e=>{
+  const v = e.target.value.trim();
+  const ok = v==='' || REGEX_CORREO.test(v);
+  document.getElementById('perfilEmailError').style.display = ok ? 'none' : 'block';
+  e.target.style.borderColor = ok ? '' : '#b3392e';
+});
+document.getElementById('recetaArea').addEventListener('input', e=>{
+  const f = filtrarDecimalPositivo(e.target.value);
+  if(f!==e.target.value) e.target.value = f;
+  recetaInfo.area = f;
+});
 
 seleccionarMetodo('UNIDADES');
 
